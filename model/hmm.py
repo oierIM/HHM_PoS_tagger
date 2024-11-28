@@ -18,7 +18,7 @@ class HMMPOSTagger:
         transition_counts = defaultdict(int)
         tag_counts = defaultdict(int)
 
-        prev_tag = '--s--'
+        prev_tag = '*'
 
         for tok_tag in training_corpus:
 
