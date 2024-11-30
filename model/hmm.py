@@ -8,7 +8,7 @@ class HMMPOSTagger:
         self.transition_counts = defaultdict(lambda:defaultdict(int))
         self.emission_counts = defaultdict(lambda:defaultdict(int))
         self.transition_probs = defaultdict(lambda:defaultdict(float)) #Dictionary to save transition probabilities
-        self.emmision_probs = defaultdict(lambda:defaultdict(float)) #Dictionary to save emmision probabilities
+        self.emission_probs = defaultdict(lambda:defaultdict(float)) #Dictionary to save emmision probabilities
         self.word_counts = Counter() #To count each word
         self.tag_counts = Counter()
 
@@ -40,13 +40,16 @@ class HMMPOSTagger:
     def get_probs(self):
         
         #Transition probs
-        for tag in self.tags:
+        for prev_tag, next_tags in self.transition_counts.items():
+            total_transitions = sum(next_tags.values())
+            for tag, count in next_tags.items():
+                self.transition_probs[prev_tag][tag] = count / total_transitions
 
-            next_tags = self.transition_counts[tag]
-
-            for next_tag in next_tag.keys():
-
-                next_tags/total_counts
+        #Emmision probs
+        for tag, words in self.emission_counts.items():
+            total_emissions = sum(words.values())
+            for word, count in words.items():
+                self.emission_probs[word][tag] = count / total_emissions
 
     
     def vilterbi_alg(self, sentence):
