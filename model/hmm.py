@@ -2,16 +2,15 @@ import numpy as np
 from collections import defaultdict, Counter
 
 class HMMPOSTagger:
-    def __init__(self):
-        self.tags = set() #Set of tags
+    def __init__(self, tags):
+        self.tags = tags
         self.num_tags= len(self.tags)
         self.transition_counts = defaultdict(int)
         self.emission_counts = defaultdict(int)
-        self.tag_counts = defaultdict(int)
         self.transition_probs = defaultdict(lambda:defaultdict(float)) #Dictionary to save transition probabilities
         self.emmision_probs = defaultdict(lambda:defaultdict(float)) #Dictionary to save emmision probabilities
-        self.tag_counts = Counter() #To count each tag
         self.word_counts = Counter() #To count each word
+        self.tag_counts = Counter()
 
     def train(self, sentences, pos_tags, vocab):
         """
@@ -22,23 +21,23 @@ class HMMPOSTagger:
 
         prev_tag = '*'
 
-        for tok, tag in zip(sentences, pos_tags):
+        for word, tag in zip(sentences, pos_tags):
 
-            if tok not in vocab:
-                tok = 'unk'
+            if word not in vocab:
+                word = 'unk'
             self.transition_counts[(prev_tag, tag)] += 1
-            self.emission_counts[(tag, tok)] += 1
+            self.emission_counts[(tag, word)] += 1
             self.tag_counts[tag] += 1
             prev_tag = tag
 
-    def create_transition_matrix(self, transition_counts, tag_counts):
-        all_tags = sorted(tag_counts.keys())
+    def create_transition_matrix(self):
+        all_tags = sorted(self.tag_counts.keys())
 
         # initialize the transition matrix 'A'
         transition = np.zeros((self.num_tags, self.num_tags))
 
         # get the unique transition tuples (prev POS, cur POS)
-        trans_keys = set(transition_counts.keys())
+        trans_keys = set(self.transition_counts.keys())
 
         for i in range(self.num_tags):
             for j in range(self.num_tags):
@@ -46,9 +45,9 @@ class HMMPOSTagger:
                 count = 0
 
                 key = (all_tags[i], all_tags[j])
-                if key in transition_counts:
-                    count = transition_counts[key]
-                count_prev_tag = tag_counts[all_tags[i]]
+                if key in self.transition_counts:
+                    count = self.transition_counts[key]
+                count_prev_tag = self.tag_counts[all_tags[i]]
 
                 transition[i, j] = (count) / (count_prev_tag)
 
