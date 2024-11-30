@@ -18,6 +18,8 @@ class HMMPOSTagger:
         """
 
         self.get_counts(sentences, pos_tags, vocab)
+        self.get_probs()
+
         
     def get_counts(self, sentences, pos_tags, vocab):
 
@@ -35,47 +37,17 @@ class HMMPOSTagger:
                 prev_tag = tag
             self.transition_counts[prev_tag]["<STOP>"] +=1
 
-    def create_transition_matrix(self):
-        all_tags = sorted(self.tag_counts.keys())
+    def get_probs(self):
+        
+        #Transition probs
+        for tag in self.tags:
 
-        # initialize the transition matrix 'A'
-        transition = np.zeros((self.num_tags, self.num_tags))
+            next_tags = self.transition_counts[tag]
 
-        # get the unique transition tuples (prev POS, cur POS)
-        trans_keys = set(self.transition_counts.keys())
+            for next_tag in next_tag.keys():
 
-        for i in range(self.num_tags):
-            for j in range(self.num_tags):
-                # initialize the count of (prev POS, cur POS)
-                count = 0
+                next_tags/total_counts
 
-                key = (all_tags[i], all_tags[j])
-                if key in self.transition_counts:
-                    count = self.transition_counts[key]
-                count_prev_tag = self.tag_counts[all_tags[i]]
-
-                transition[i, j] = (count) / (count_prev_tag)
-
-        return transition
-
-    def create_emission_matrix(self, emission_counts, tag_counts, vocab2idx):
-        num_tags = len(tag_counts)
-        all_tags = sorted(tag_counts.keys())
-        num_words = len(vocab2idx)
-
-        emission = np.zeros((num_tags, num_words))
-        emis_keys = set(list(emission_counts.keys()))
-        for i in range(num_tags):
-            for j in range(num_words):
-                count = 0
-
-                key =  (all_tags[i], vocab2idx[j])
-                if key in emission_counts:
-                    count = emission_counts[key]
-                count_tag = tag_counts[all_tags[i]]
-
-                emission[i, j] = (count) / (num_words)
-        return emission
     
     def vilterbi_alg(self, sentence):
         """
