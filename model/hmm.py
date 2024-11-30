@@ -5,40 +5,43 @@ class HMMPOSTagger:
     def __init__(self):
         self.tags = set() #Set of tags
         self.num_tags= len(self.tags)
+        self.transition_counts = defaultdict(int)
+        self.emission_counts = defaultdict(int)
+        self.tag_counts = defaultdict(int)
         self.transition_probs = defaultdict(lambda:defaultdict(float)) #Dictionary to save transition probabilities
         self.emmision_probs = defaultdict(lambda:defaultdict(float)) #Dictionary to save emmision probabilities
         self.tag_counts = Counter() #To count each tag
         self.word_counts = Counter() #To count each word
 
-    def train(self, sentences, pos_tags):
+    def train(self, sentences, pos_tags, vocab):
         """
         Training the HMM given sentences and their pos_tags
         """
-
-        transition_counts = defaultdict(int)
-        tag_counts = defaultdict(int)
+        
+    def get_counts(self, sentences, pos_tags, vocab):
 
         prev_tag = '*'
 
-        for tok_tag in training_corpus:
+        for tok, tag in zip(sentences, pos_tags):
 
-            tok, tag = get_word_tag(tok_tag, vocab2idx)
-            transition_counts[(prev_tag, tag)] += 1
-            emission_counts[(tag, tok)] += 1
-            tag_counts[tag] += 1
+            if tok not in vocab:
+                tok = 'unk'
+            self.transition_counts[(prev_tag, tag)] += 1
+            self.emission_counts[(tag, tok)] += 1
+            self.tag_counts[tag] += 1
             prev_tag = tag
 
-        #transition matrix
+    def create_transition_matrix(self, transition_counts, tag_counts):
+        all_tags = sorted(tag_counts.keys())
+
+        # initialize the transition matrix 'A'
+        transition = np.zeros((self.num_tags, self.num_tags))
 
         # get the unique transition tuples (prev POS, cur POS)
         trans_keys = set(transition_counts.keys())
 
-
-        all_tags = sorted(tag_counts.keys())
-        num_tags = len(all_tags)
-
-        for i in range(num_tags):
-            for j in range(num_tags):
+        for i in range(self.num_tags):
+            for j in range(self.num_tags):
                 # initialize the count of (prev POS, cur POS)
                 count = 0
 
@@ -47,16 +50,16 @@ class HMMPOSTagger:
                     count = transition_counts[key]
                 count_prev_tag = tag_counts[all_tags[i]]
 
-                self.transition_probs[i, j] = (count) / (count_prev_tag)
+                transition[i, j] = (count) / (count_prev_tag)
 
-        #emission matrix
+        return transition
 
+    def create_emission_matrix(self, emission_counts, tag_counts, vocab2idx):
         num_tags = len(tag_counts)
         all_tags = sorted(tag_counts.keys())
         num_words = len(vocab2idx)
 
-
-        B = np.zeros((num_tags, num_words))
+        emission = np.zeros((num_tags, num_words))
         emis_keys = set(list(emission_counts.keys()))
         for i in range(num_tags):
             for j in range(num_words):
@@ -67,16 +70,8 @@ class HMMPOSTagger:
                     count = emission_counts[key]
                 count_tag = tag_counts[all_tags[i]]
 
-                self.emmision_probs[i, j] = (count) / (count_tag)
-
-
-        
-    
-    def calculate_probabilities(self, transition_counts, emmision_counts):
-        """
-        Calculate transition and emission probabilities given their counts
-        """
-        pass
+                emission[i, j] = (count) / (num_words)
+        return emission
     
     def vilterbi_alg(self, sentence):
         """
