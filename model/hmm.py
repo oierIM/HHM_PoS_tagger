@@ -56,7 +56,23 @@ class HMMPOSTagger:
         """
         Function that executes the Vilterbi algorithm to find the best tags for a given sentence
         """
-        pass
+        best_probs = np.zeros((self.num_tags, self.num_tags))
+        best_paths = np.zeros((self.num_tags, len(prep_tokens)), dtype=int)
+        s_idx = states.index('--s--')
+
+        for i in range(num_tags):
+            if A[s_idx, i] == 0:
+                best_probs[i, 0] = float('-inf')
+            else:
+                best_probs[i,0] = np.log(A[s_idx, i]) + np.log(B[i, vocab2idx[prep_tokens[0]]])
+
+
+        prev_tag = '*'
+        for word_idx in range(0, len(sentence)):
+            cur_word = sentence[word_idx]
+            for cur_tag in self.emission_probs[cur_word]:
+                transition_prob = self.transition_probs[prev_tag][cur_tag]
+                emission_prob = self.emission_probs[cur_word][cur_tag]
     
     def evaluate(self, sentences, pos_tags):
         """
