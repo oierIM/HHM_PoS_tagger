@@ -3,8 +3,9 @@ from collections import defaultdict, Counter
 
 class HMMPOSTagger:
     def __init__(self, tags):
-        self.tags_idx = {i: tag for i, tag in enumerate(tags)}
-        self.tags = list(self.tags_idx.keys())
+        self.tags2idx = {tag: i for i, tag in enumerate(tags)}
+        self.idx2tags = {i: tag for i, tag in enumerate(tags)}
+        self.tags = list(self.idx2tags.keys())
         self.Q= len(self.tags)
         self.transition_counts = defaultdict(lambda:defaultdict(int))
         self.emission_counts = defaultdict(lambda:defaultdict(int))
@@ -26,16 +27,17 @@ class HMMPOSTagger:
 
 
         for sentence, tags in zip(sentences, pos_tags):
-            prev_tag = '*'
+            prev_tag = self.tags2idx['*']
             for word, tag in zip(sentence, tags):
-
-                if word not in vocab:
-                    word = 'unk'
-                self.transition_counts[prev_tag][tag] += 1
-                self.emission_counts[tag][word] += 1
-                self.tag_counts[tag] += 1
+                
+                tag_idx = self.tags2idx[tag]
+                # if word not in vocab:
+                #     word = 'unk'
+                self.transition_counts[prev_tag][tag_idx] += 1
+                self.emission_counts[tag_idx][word] += 1
+                self.tag_counts[tag_idx] += 1
                 self.word_counts[word] += 1
-                prev_tag = tag
+                prev_tag = tag_idx
             self.transition_counts[prev_tag]["<STOP>"] +=1
 
     def get_probs(self):
@@ -62,32 +64,37 @@ class HMMPOSTagger:
 
         sentence = [w.lower() for w in sentence] 
 
-
         #T+1 if in the sentence doesn't appear a <STOP> in the end
         # viterbi = np.zeros((self.Q, T+1))
         # backpointer = np.zeros((self.Q, T+1))
-
+        
         viterbi = np.zeros((self.Q, T))
         backpointer = np.zeros((self.Q, T))
-
+ 
         for tag_idx in range(self.Q):
-            viterbi[tag_idx][0] = (A['*'][self.tags_idx[tag_idx]] * B[sentence[0]].get(self.tags_idx[tag_idx], 1e-6))
-            backpointer[tag_idx][0] = 0
-        
+            viterbi[tag_idx][0] = (A[self.tags2idx['*']][tag_idx] * B[tag_idx].get(sentence[0], 1e-6))
+
         for t in range(1, T):
             for q in range(self.Q):
-                viterbi[q, t] = np.max(viterbi[:, t-1] * A[:][q] * B[q][t])
-                backpointer[q, t] = np.argmax(viterbi[:, t-1] * A[:][q] * B[q][t])
+                print(str(self.idx2tags[q]) + " -----------------------------")
+
+                # print([viterbi[q_p, t-1] for q_p in range(self.Q)])
+                # print([A[q_p][q] for q_p in range(self.Q)])
+                print([B[q][t] for q_p in range(self.Q)])
+
+                viterbi[q, t] = np.max([viterbi[q_p, t] * A[q_p][q] * B[q][t] for q_p in range(self.Q)])
+                backpointer[q, t] = np.argmax([viterbi[q_p, t] * A[q_p][q] * B[q][t] for q_p in range(self.Q)])
         
         #Last iteration for <STOP>
         # for q in self.Q:
         #     viterbi[q, -1] = np.max(viterbi[:, t-1] * A[:]['<STOP>'])
         #     backpointer[q, -1] = np.argmax(viterbi[:, t-1] * A[:]['<STOP>'])
         
-        best_path_pointer = [self.tags_idx['<STOP>']]
-        print(best_path_pointer)
+        best_path_pointer = [self.tags2idx['<STOP>']]
+        print(viterbi)
 
         for t in range(T, 0, -1):
+            print(best_path_pointer[0])
             best_path_pointer.insert(0, backpointer[best_path_pointer[0]][t-1])
         
         return best_path_pointer
