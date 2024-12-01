@@ -3,8 +3,8 @@ from collections import defaultdict, Counter
 
 class HMMPOSTagger:
     def __init__(self, tags):
-        self.tags = tags
-        self.tags_idx = {i: tag for i, tag in enumerate(self.tags)}
+        self.tags_idx = {i: tag for i, tag in enumerate(tags)}
+        self.tags = list(self.tags_idx.keys())
         self.Q= len(self.tags)
         self.transition_counts = defaultdict(lambda:defaultdict(int))
         self.emission_counts = defaultdict(lambda:defaultdict(int))
@@ -24,9 +24,9 @@ class HMMPOSTagger:
         
     def get_counts(self, sentences, pos_tags, vocab):
 
-        prev_tag = '*'
 
         for sentence, tags in zip(sentences, pos_tags):
+            prev_tag = '*'
             for word, tag in zip(sentence, tags):
 
                 if word not in vocab:
@@ -60,6 +60,9 @@ class HMMPOSTagger:
         B = self.emission_probs
         T = len(sentence)
 
+        sentence = [w.lower() for w in sentence] 
+
+
         #T+1 if in the sentence doesn't appear a <STOP> in the end
         # viterbi = np.zeros((self.Q, T+1))
         # backpointer = np.zeros((self.Q, T+1))
@@ -67,12 +70,12 @@ class HMMPOSTagger:
         viterbi = np.zeros((self.Q, T))
         backpointer = np.zeros((self.Q, T))
 
-        for tag_idx in range(self.num_tags):
+        for tag_idx in range(self.Q):
             viterbi[tag_idx][0] = (A['*'][self.tags_idx[tag_idx]] * B[sentence[0]].get(self.tags_idx[tag_idx], 1e-6))
             backpointer[tag_idx][0] = 0
         
         for t in range(1, T):
-            for q in self.Q:
+            for q in range(self.Q):
                 viterbi[q, t] = np.max(viterbi[:, t-1] * A[:][q] * B[q][t])
                 backpointer[q, t] = np.argmax(viterbi[:, t-1] * A[:][q] * B[q][t])
         
@@ -81,10 +84,11 @@ class HMMPOSTagger:
         #     viterbi[q, -1] = np.max(viterbi[:, t-1] * A[:]['<STOP>'])
         #     backpointer[q, -1] = np.argmax(viterbi[:, t-1] * A[:]['<STOP>'])
         
-        best_path_pointer = ['<STOP>']
+        best_path_pointer = [self.tags_idx['<STOP>']]
+        print(best_path_pointer)
 
         for t in range(T, 0, -1):
-            best_path_pointer.insert(0, backpointer[best_path_pointer[0]][t])
+            best_path_pointer.insert(0, backpointer[best_path_pointer[0]][t-1])
         
         return best_path_pointer
 
@@ -95,7 +99,7 @@ class HMMPOSTagger:
         """
         correct, total = 0, 0
         for sentence, true_tags in zip(sentences, pos_tags):
-            pred_tags = self.viterbi(sentence)
+            pred_tags = self.viterbi_alg(sentence)
             for p, t in zip(pred_tags, true_tags):
                 if p==t:
                     correct +=1

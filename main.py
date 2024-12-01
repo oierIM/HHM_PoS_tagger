@@ -13,12 +13,9 @@ from collections import defaultdict, Counter
 #     save('A.npy', A)
 #     save('B.npy', B)
 
-def build_vocab(corpus):
+def build_vocab(sentences):
 
-    tokens = corpus #betetzeko
-    freqs = defaultdict(int)
-    for tok in tokens:
-        freqs[tok] += 1
+    set(sentences)
 
     vocab = [k for k, v in freqs.items() if (v > 1 and k != '\n')]
     unk_toks = ["--unk--", "--unk_adj--", "--unk_adv--", "--unk_digit--", "--unk_noun--", "--unk_punct--", "--unk_upper--", "--unk_verb--"]
@@ -28,7 +25,54 @@ def build_vocab(corpus):
     return vocab
 
 if __name__ == "__main__":
-    corpus = ""
-    vocab = build_vocab(corpus)
+    # corpus = ""
+    # vocab = build_vocab(corpus)
+
+    tags = ['DET', 'ADJ', 'ADV', 'PREP', 'NOUN', 'VERB', '*', '<STOP>', '<UNK>']
+
+    sentences = [['I', 'went', 'to', 'Brazil'],
+                 ['God', 'loves', 'NLP'],
+                 ['Is', 'me', 'Mario'],
+                 ['Hello', 'Jeremy'],
+                 ['Hello', 'Jeremy']]
+    
+    sentences = [[w.lower() for w in s] for s in sentences]
+    
+    pos_tags = [['NOUN', 'VERB', 'PREP', 'NOUN'],
+                 ['NOUN', 'VERB', 'NOUN'],
+                 ['VERB', 'NOUN', 'NOUN'],
+                 ['ADV', 'NOUN'],
+                 ['ADV', 'NOUN']]
+    
+    # for i in range(len(sentences)):
+    #     sentences[i].insert(0, '*')
+    #     sentences[i].append('<STOP>')
+
+    #     pos_tags[i].insert(0, '*')
+    #     pos_tags[i].append('<STOP>')
+
+    vocab = set()
+    for s in sentences:
+        for word in s:
+            vocab.add(word.lower())
+    vocab.add('*')
+    vocab.add('<STOP>')
+
+    hmm = HMMPOSTagger(tags)
+
+    hmm.train(sentences, pos_tags, vocab)
+
+    # print(hmm.emission_probs)
+    # print('-----------------')
+    # print(hmm.transition_probs)
+    # print('-----------------')
+    # print(hmm.emission_counts)
+    # print('-----------------')
+
+    print(hmm.viterbi_alg(['Jeremy','loves','NLP']))
+    
+
+    
+
 
     
