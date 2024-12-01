@@ -54,7 +54,7 @@ class HMMPOSTagger:
             for word, count in words.items():
                 self.emission_probs[tag][word] = count / total_emissions
     
-    def viterbi_alg(self, sentence):
+    def viterbi_alg(self, sentence: list[int]):
         """
         Function that executes the Vilterbi algorithm to find the best tags for a given sentence
         """
@@ -62,8 +62,9 @@ class HMMPOSTagger:
         B = self.emission_probs
         T = len(sentence)
 
-        sentence = [w.lower() if w in self.vocab else '<UNK>' for w in sentence ]
+        sentence = [w.lower() if w.lower() in self.vocab else '<UNK>' for w in sentence]
 
+        print(sentence)
         #T+1 if in the sentence doesn't appear a <STOP> in the end
         # viterbi = np.zeros((self.Q, T+1))
         # backpointer = np.zeros((self.Q, T+1))
@@ -72,27 +73,21 @@ class HMMPOSTagger:
         backpointer = np.zeros((self.Q, T), dtype=int)
  
         for tag_idx in range(self.Q):
-            if sentence[0] == '<UNK>':
-                viterbi[self.tags2idx['<UNK>']][0] = 1
-                break
+            # if sentence[0] == '<UNK>':
+            #     viterbi[self.tags2idx['<UNK>']][0] = 1
+            #     backpointer[self.tags2idx['<UNK>']][0] = self.tags2idx['<UNK>']
+            #     break
             viterbi[tag_idx][0] = (A[self.tags2idx['*']][tag_idx] * B[tag_idx].get(sentence[0], 1e-6))
 
         for t in range(1, T):
+            # if sentence[t] == '<UNK>':
+            #     viterbi[self.tags2idx['<UNK>']][t] = 1
+            #     backpointer[self.tags2idx['<UNK>']][t] = self.tags2idx['<UNK>']
+            #     continue
             for q in range(self.Q):
                 
-                if sentence[0] == '<UNK>':
-                    viterbi[self.tags2idx['<UNK>']][0] = 1
-                    break
-
-                # print(str(self.idx2tags[q]) + " -----------------------------")
-
-                # print([viterbi[q_p, t-1] for q_p in range(self.Q)])
-                # print([A[q_p][q] for q_p in range(self.Q)])
-                # print([B[q][t] for q_p in range(self.Q)])
-
                 viterbi[q, t] = np.max([viterbi[q_p, t-1] * A[q_p][q] * B[q].get(sentence[t], 1e-6) for q_p in range(self.Q)])
                 backpointer[q, t] = np.argmax([viterbi[q_p, t-1] * A[q_p][q] * B[q].get(sentence[t], 1e-6) for q_p in range(self.Q)])
-        print(viterbi)
         
         #Last iteration for <STOP>
         # for q in self.Q:
@@ -100,10 +95,8 @@ class HMMPOSTagger:
         #     backpointer[q, -1] = np.argmax(viterbi[:, t-1] * A[:]['<STOP>'])
         
         best_path_pointer = [np.argmax(viterbi[:, T-1])]
-        #print(viterbi)
 
         for t in range(T-1, 0, -1):
-            #print(best_path_pointer[0])
             best_path_pointer.insert(0, backpointer[best_path_pointer[0]][t])
         
         return [self.idx2tags[idx] for idx in best_path_pointer]

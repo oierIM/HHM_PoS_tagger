@@ -13,17 +13,6 @@ from collections import defaultdict, Counter
 #     save('A.npy', A)
 #     save('B.npy', B)
 
-def build_vocab(sentences):
-
-    set(sentences)
-
-    vocab = [k for k, v in freqs.items() if (v > 1 and k != '\n')]
-    unk_toks = ["--unk--", "--unk_adj--", "--unk_adv--", "--unk_digit--", "--unk_noun--", "--unk_punct--", "--unk_upper--", "--unk_verb--"]
-    vocab.extend(unk_toks)
-    vocab.append("*")
-    vocab.append(" ")
-    return vocab
-
 if __name__ == "__main__":
     # corpus = ""
     # vocab = build_vocab(corpus)
@@ -34,14 +23,20 @@ if __name__ == "__main__":
                  ['God', 'loves', 'NLP'],
                  ['Is', 'me', 'Mario'],
                  ['Hello', 'Jeremy'],
+                 ['<UNK>', '<UNK>', 'me'],
+                 ['Mario', '<UNK>'],
+                 ['Mario', '<UNK>', 'loves'],
                  ['Hello', 'Jeremy']]
     
-    sentences = [[w.lower() for w in s] for s in sentences]
+    sentences = [[w.lower() if w != '<UNK>' else w for w in s] for s in sentences]
     
     pos_tags = [['NOUN', 'VERB', 'PREP', 'NOUN'],
                  ['NOUN', 'VERB', 'NOUN'],
                  ['VERB', 'NOUN', 'NOUN'],
                  ['ADV', 'NOUN'],
+                 ['<UNK>', '<UNK>', 'NOUN'],
+                 ['NOUN', '<UNK>'],
+                 ['NOUN', '<UNK>', 'VERB'],
                  ['ADV', 'NOUN']]
     
     # for i in range(len(sentences)):
@@ -68,7 +63,7 @@ if __name__ == "__main__":
     # print('-----------------')
     # print(hmm.emission_counts)
     # print('-----------------')
-    test = ['Kaixo', 'loves', 'NLP']
+    test = ['Kaixo', 'Loves', 'NLP']
     print(test)
     print(hmm.viterbi_alg(test))
     
