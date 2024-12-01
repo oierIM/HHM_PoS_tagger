@@ -69,35 +69,35 @@ class HMMPOSTagger:
         # backpointer = np.zeros((self.Q, T+1))
         
         viterbi = np.zeros((self.Q, T))
-        backpointer = np.zeros((self.Q, T))
+        backpointer = np.zeros((self.Q, T), dtype=int)
  
         for tag_idx in range(self.Q):
             viterbi[tag_idx][0] = (A[self.tags2idx['*']][tag_idx] * B[tag_idx].get(sentence[0], 1e-6))
 
         for t in range(1, T):
             for q in range(self.Q):
-                print(str(self.idx2tags[q]) + " -----------------------------")
+                # print(str(self.idx2tags[q]) + " -----------------------------")
 
                 # print([viterbi[q_p, t-1] for q_p in range(self.Q)])
                 # print([A[q_p][q] for q_p in range(self.Q)])
-                print([B[q][t] for q_p in range(self.Q)])
+                # print([B[q][t] for q_p in range(self.Q)])
 
-                viterbi[q, t] = np.max([viterbi[q_p, t] * A[q_p][q] * B[q][t] for q_p in range(self.Q)])
-                backpointer[q, t] = np.argmax([viterbi[q_p, t] * A[q_p][q] * B[q][t] for q_p in range(self.Q)])
+                viterbi[q, t] = np.max([viterbi[q_p, t-1] * A[q_p][q] * B[q].get(sentence[t], 1e-6) for q_p in range(self.Q)])
+                backpointer[q, t] = np.argmax([viterbi[q_p, t-1] * A[q_p][q] * B[q].get(sentence[t], 1e-6) for q_p in range(self.Q)])
         
         #Last iteration for <STOP>
         # for q in self.Q:
         #     viterbi[q, -1] = np.max(viterbi[:, t-1] * A[:]['<STOP>'])
         #     backpointer[q, -1] = np.argmax(viterbi[:, t-1] * A[:]['<STOP>'])
         
-        best_path_pointer = [self.tags2idx['<STOP>']]
-        print(viterbi)
+        best_path_pointer = [np.argmax(viterbi[:, T-1])]
+        #print(viterbi)
 
-        for t in range(T, 0, -1):
-            print(best_path_pointer[0])
-            best_path_pointer.insert(0, backpointer[best_path_pointer[0]][t-1])
+        for t in range(T-1, 0, -1):
+            #print(best_path_pointer[0])
+            best_path_pointer.insert(0, backpointer[best_path_pointer[0]][t])
         
-        return best_path_pointer
+        return [self.idx2tags[idx] for idx in best_path_pointer]
 
     
     def evaluate(self, sentences, pos_tags):

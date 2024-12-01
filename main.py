@@ -62,14 +62,15 @@ if __name__ == "__main__":
 
     hmm.train(sentences, pos_tags, vocab)
 
-    print(hmm.emission_probs)
+    #print(hmm.emission_probs)
     # print('-----------------')
     # print(hmm.transition_probs)
     # print('-----------------')
     # print(hmm.emission_counts)
     # print('-----------------')
-
-    # print(hmm.viterbi_alg(['Jeremy','loves','NLP']))
+    test = ['Jeremy', 'loves', 'NLP']
+    print(test)
+    print(hmm.viterbi_alg(test))
     
 
     
