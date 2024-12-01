@@ -93,4 +93,12 @@ class HMMPOSTagger:
         """
         Evaluate HMM with anothers splits' sentences and their pos tags
         """
-        pass
+        correct, total = 0, 0
+        for sentence, true_tags in zip(sentences, pos_tags):
+            pred_tags = self.viterbi(sentence)
+            for p, t in zip(pred_tags, true_tags):
+                if p==t:
+                    correct +=1
+            total += len(true_tags)
+
+        return correct / total
