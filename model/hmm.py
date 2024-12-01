@@ -2,11 +2,12 @@ import numpy as np
 from collections import defaultdict, Counter
 
 class HMMPOSTagger:
-    def __init__(self, tags):
+    def __init__(self, tags, vocab):
         self.tags2idx = {tag: i for i, tag in enumerate(tags)}
         self.idx2tags = {i: tag for i, tag in enumerate(tags)}
         self.tags = list(self.idx2tags.keys())
         self.Q= len(self.tags)
+        self.vocab = vocab
         self.transition_counts = defaultdict(lambda:defaultdict(int))
         self.emission_counts = defaultdict(lambda:defaultdict(int))
         self.transition_probs = defaultdict(lambda:defaultdict(float)) #Dictionary to save transition probabilities
@@ -14,16 +15,16 @@ class HMMPOSTagger:
         self.word_counts = Counter() #To count each word
         self.tag_counts = Counter()
 
-    def train(self, sentences, pos_tags, vocab):
+    def train(self, sentences, pos_tags):
         """
         Training the HMM given sentences and their pos_tags
         """
 
-        self.get_counts(sentences, pos_tags, vocab)
+        self.get_counts(sentences, pos_tags)
         self.get_probs()
 
         
-    def get_counts(self, sentences, pos_tags, vocab):
+    def get_counts(self, sentences, pos_tags):
 
 
         for sentence, tags in zip(sentences, pos_tags):
@@ -31,8 +32,7 @@ class HMMPOSTagger:
             for word, tag in zip(sentence, tags):
                 
                 tag_idx = self.tags2idx[tag]
-                # if word not in vocab:
-                #     word = 'unk'
+                
                 self.transition_counts[prev_tag][tag_idx] += 1
                 self.emission_counts[tag_idx][word] += 1
                 self.tag_counts[tag_idx] += 1
@@ -62,7 +62,7 @@ class HMMPOSTagger:
         B = self.emission_probs
         T = len(sentence)
 
-        sentence = [w.lower() for w in sentence] 
+        sentence = [w.lower() if w in self.vocab else '<UNK>' for w in sentence ]
 
         #T+1 if in the sentence doesn't appear a <STOP> in the end
         # viterbi = np.zeros((self.Q, T+1))
@@ -72,10 +72,18 @@ class HMMPOSTagger:
         backpointer = np.zeros((self.Q, T), dtype=int)
  
         for tag_idx in range(self.Q):
+            if sentence[0] == '<UNK>':
+                viterbi[self.tags2idx['<UNK>']][0] = 1
+                break
             viterbi[tag_idx][0] = (A[self.tags2idx['*']][tag_idx] * B[tag_idx].get(sentence[0], 1e-6))
 
         for t in range(1, T):
             for q in range(self.Q):
+                
+                if sentence[0] == '<UNK>':
+                    viterbi[self.tags2idx['<UNK>']][0] = 1
+                    break
+
                 # print(str(self.idx2tags[q]) + " -----------------------------")
 
                 # print([viterbi[q_p, t-1] for q_p in range(self.Q)])
@@ -84,6 +92,7 @@ class HMMPOSTagger:
 
                 viterbi[q, t] = np.max([viterbi[q_p, t-1] * A[q_p][q] * B[q].get(sentence[t], 1e-6) for q_p in range(self.Q)])
                 backpointer[q, t] = np.argmax([viterbi[q_p, t-1] * A[q_p][q] * B[q].get(sentence[t], 1e-6) for q_p in range(self.Q)])
+        print(viterbi)
         
         #Last iteration for <STOP>
         # for q in self.Q:

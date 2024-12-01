@@ -58,9 +58,9 @@ if __name__ == "__main__":
     vocab.add('*')
     vocab.add('<STOP>')
 
-    hmm = HMMPOSTagger(tags)
+    hmm = HMMPOSTagger(tags, vocab)
 
-    hmm.train(sentences, pos_tags, vocab)
+    hmm.train(sentences, pos_tags)
 
     #print(hmm.emission_probs)
     # print('-----------------')
@@ -68,7 +68,7 @@ if __name__ == "__main__":
     # print('-----------------')
     # print(hmm.emission_counts)
     # print('-----------------')
-    test = ['Jeremy', 'loves', 'NLP']
+    test = ['Kaixo', 'loves', 'NLP']
     print(test)
     print(hmm.viterbi_alg(test))
     
