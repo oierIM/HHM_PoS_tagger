@@ -4,7 +4,8 @@ from collections import defaultdict, Counter
 class HMMPOSTagger:
     def __init__(self, tags):
         self.tags = tags
-        self.num_tags= len(self.tags)
+        self.tags_idx = {i: tag for i, tag in enumerate(self.tags)}
+        self.Q= len(self.tags)
         self.transition_counts = defaultdict(lambda:defaultdict(int))
         self.emission_counts = defaultdict(lambda:defaultdict(int))
         self.transition_probs = defaultdict(lambda:defaultdict(float)) #Dictionary to save transition probabilities
@@ -49,30 +50,44 @@ class HMMPOSTagger:
         for tag, words in self.emission_counts.items():
             total_emissions = sum(words.values())
             for word, count in words.items():
-                self.emission_probs[word][tag] = count / total_emissions
-
+                self.emission_probs[tag][word] = count / total_emissions
     
-    def vilterbi_alg(self, sentence):
+    def viterbi_alg(self, sentence):
         """
         Function that executes the Vilterbi algorithm to find the best tags for a given sentence
         """
-        best_probs = np.zeros((self.num_tags, self.num_tags))
-        best_paths = np.zeros((self.num_tags, len(prep_tokens)), dtype=int)
-        s_idx = states.index('--s--')
+        A = self.transition_probs
+        B = self.emission_probs
+        T = len(sentence)
 
-        for i in range(num_tags):
-            if A[s_idx, i] == 0:
-                best_probs[i, 0] = float('-inf')
-            else:
-                best_probs[i,0] = np.log(A[s_idx, i]) + np.log(B[i, vocab2idx[prep_tokens[0]]])
+        #T+1 if in the sentence doesn't appear a <STOP> in the end
+        # viterbi = np.zeros((self.Q, T+1))
+        # backpointer = np.zeros((self.Q, T+1))
 
+        viterbi = np.zeros((self.Q, T))
+        backpointer = np.zeros((self.Q, T))
 
-        prev_tag = '*'
-        for word_idx in range(0, len(sentence)):
-            cur_word = sentence[word_idx]
-            for cur_tag in self.emission_probs[cur_word]:
-                transition_prob = self.transition_probs[prev_tag][cur_tag]
-                emission_prob = self.emission_probs[cur_word][cur_tag]
+        for tag_idx in range(self.num_tags):
+            viterbi[tag_idx][0] = (A['*'][self.tags_idx[tag_idx]] * B[sentence[0]].get(self.tags_idx[tag_idx], 1e-6))
+            backpointer[tag_idx][0] = 0
+        
+        for t in range(1, T):
+            for q in self.Q:
+                viterbi[q, t] = np.max(viterbi[:, t-1] * A[:][q] * B[q][t])
+                backpointer[q, t] = np.argmax(viterbi[:, t-1] * A[:][q] * B[q][t])
+        
+        #Last iteration for <STOP>
+        # for q in self.Q:
+        #     viterbi[q, -1] = np.max(viterbi[:, t-1] * A[:]['<STOP>'])
+        #     backpointer[q, -1] = np.argmax(viterbi[:, t-1] * A[:]['<STOP>'])
+        
+        best_path_pointer = ['<STOP>']
+
+        for t in range(T, 0, -1):
+            best_path_pointer.insert(0, backpointer[best_path_pointer[0]][t])
+        
+        return best_path_pointer
+
     
     def evaluate(self, sentences, pos_tags):
         """
