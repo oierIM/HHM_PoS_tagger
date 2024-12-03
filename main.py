@@ -63,13 +63,14 @@ if __name__ == "__main__":
     # print('-----------------')
     # print(hmm.emission_counts)
     # print('-----------------')
+    test1 = ['Jeremy','Loves','NLP']
     test = [['Jeremy', 'Loves', 'NLP'],
             ['Mario', 'is', 'god'],
             ['Kaixo', 'zer', 'moduz']]
     tags = [['NOUN', 'VERB', 'NOUN'],
             ['NOUN', 'VERB', 'NOUN'],
             ['<UNK>', '<UNK>', '<UNK>']]
-    print(hmm.evaluate(test, tags))
+    print(hmm.viterbi_alg(test1))
     
 
     
