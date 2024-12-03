@@ -20,6 +20,7 @@ CoNLL-U format fields (source: https://universaldependencies.org/format.html)
 import os
 import pandas as pd
 from conllu import parse_incr
+import csv
 
 def load_conllu_files(directory, prefixes):
     """
@@ -111,6 +112,16 @@ def load_sentences_from_directories(directories, prefixes=[]):
     for directory in directories:
         all_sentences.extend(load_conllu_files(directory, prefixes))
     return sentences_to_dataframe(all_sentences)
+
+def store_sentences_in_csv(df):
+    sentences = []
+
+    for i in range(max(df["sentence_index"])):
+        sentences.append(df[df['sentence_index']==i]["form"].to_list())
+
+    with open('./datasets/dataset_sentences.csv', 'w', newline='') as f:
+        writer = csv.writer(f)
+        writer.writerows(sentences)
 
 
 # Probak egiteko deskomentatu, bestela "import" bidez erabili
