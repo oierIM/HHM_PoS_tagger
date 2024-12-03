@@ -116,7 +116,7 @@ def load_sentences_from_directories(directories, prefixes=[]):
 # Probak egiteko deskomentatu, bestela "import" bidez erabili
 if __name__ == "__main__":
 
-    directories = ["datasets/gum"]
+    directories = ["datasets/gum", "datasets/ewt"]
     df = load_sentences_from_directories(directories)
     print(df.iloc[-1])
 
