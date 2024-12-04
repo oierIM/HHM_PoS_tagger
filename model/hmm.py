@@ -2,9 +2,12 @@ import numpy as np
 from collections import defaultdict, Counter
 
 class HMMPOSTagger:
-    def __init__(self, tags):
-        self.tags = tags
-        self.num_tags= len(self.tags)
+    def __init__(self, tags, vocab):
+        self.tags2idx = {tag: i for i, tag in enumerate(tags)}
+        self.idx2tags = {i: tag for i, tag in enumerate(tags)}
+        self.tags = list(self.idx2tags.keys())
+        self.Q= len(self.tags)
+        self.vocab = vocab
         self.transition_counts = defaultdict(lambda:defaultdict(int))
         self.emission_counts = defaultdict(lambda:defaultdict(int))
         self.transition_probs = defaultdict(lambda:defaultdict(float)) #Dictionary to save transition probabilities
@@ -12,29 +15,29 @@ class HMMPOSTagger:
         self.word_counts = Counter() #To count each word
         self.tag_counts = Counter()
 
-    def train(self, sentences, pos_tags, vocab):
+    def train(self, sentences, pos_tags):
         """
         Training the HMM given sentences and their pos_tags
         """
 
-        self.get_counts(sentences, pos_tags, vocab)
+        self.get_counts(sentences, pos_tags)
         self.get_probs()
 
         
-    def get_counts(self, sentences, pos_tags, vocab):
+    def get_counts(self, sentences, pos_tags):
 
-        prev_tag = '*'
 
         for sentence, tags in zip(sentences, pos_tags):
+            prev_tag = self.tags2idx['*']
             for word, tag in zip(sentence, tags):
-
-                if word not in vocab:
-                    word = 'unk'
-                self.transition_counts[prev_tag][tag] += 1
-                self.emission_counts[tag][word] += 1
-                self.tag_counts[tag] += 1
+                
+                tag_idx = self.tags2idx[tag]
+                
+                self.transition_counts[prev_tag][tag_idx] += 1
+                self.emission_counts[tag_idx][word] += 1
+                self.tag_counts[tag_idx] += 1
                 self.word_counts[word] += 1
-                prev_tag = tag
+                prev_tag = tag_idx
             self.transition_counts[prev_tag]["<STOP>"] +=1
 
     def get_probs(self):
@@ -49,33 +52,66 @@ class HMMPOSTagger:
         for tag, words in self.emission_counts.items():
             total_emissions = sum(words.values())
             for word, count in words.items():
-                self.emission_probs[word][tag] = count / total_emissions
-
+                self.emission_probs[tag][word] = count / total_emissions
     
-    def vilterbi_alg(self, sentence):
+    def viterbi_alg(self, sentence: list[int]):
         """
         Function that executes the Vilterbi algorithm to find the best tags for a given sentence
         """
-        best_probs = np.zeros((self.num_tags, self.num_tags))
-        best_paths = np.zeros((self.num_tags, len(prep_tokens)), dtype=int)
-        s_idx = states.index('--s--')
+        A = self.transition_probs
+        B = self.emission_probs
+        T = len(sentence)
 
-        for i in range(num_tags):
-            if A[s_idx, i] == 0:
-                best_probs[i, 0] = float('-inf')
-            else:
-                best_probs[i,0] = np.log(A[s_idx, i]) + np.log(B[i, vocab2idx[prep_tokens[0]]])
+        sentence = [w.lower() if w.lower() in self.vocab else '<UNK>' for w in sentence]
 
+        print(sentence)
+        #T+1 if in the sentence doesn't appear a <STOP> in the end
+        # viterbi = np.zeros((self.Q, T+1))
+        # backpointer = np.zeros((self.Q, T+1))
+        
+        viterbi = np.zeros((self.Q, T))
+        backpointer = np.zeros((self.Q, T), dtype=int)
+ 
+        for tag_idx in range(self.Q):
+            # if sentence[0] == '<UNK>':
+            #     viterbi[self.tags2idx['<UNK>']][0] = 1
+            #     backpointer[self.tags2idx['<UNK>']][0] = self.tags2idx['<UNK>']
+            #     break
+            viterbi[tag_idx][0] = (A[self.tags2idx['*']][tag_idx] * B[tag_idx].get(sentence[0], 1e-6))
 
-        prev_tag = '*'
-        for word_idx in range(0, len(sentence)):
-            cur_word = sentence[word_idx]
-            for cur_tag in self.emission_probs[cur_word]:
-                transition_prob = self.transition_probs[prev_tag][cur_tag]
-                emission_prob = self.emission_probs[cur_word][cur_tag]
+        for t in range(1, T):
+            # if sentence[t] == '<UNK>':
+            #     viterbi[self.tags2idx['<UNK>']][t] = 1
+            #     backpointer[self.tags2idx['<UNK>']][t] = self.tags2idx['<UNK>']
+            #     continue
+            for q in range(self.Q):
+                
+                viterbi[q, t] = np.max([viterbi[q_p, t-1] * A[q_p][q] * B[q].get(sentence[t], 1e-6) for q_p in range(self.Q)])
+                backpointer[q, t] = np.argmax([viterbi[q_p, t-1] * A[q_p][q] * B[q].get(sentence[t], 1e-6) for q_p in range(self.Q)])
+        
+        #Last iteration for <STOP>
+        # for q in self.Q:
+        #     viterbi[q, -1] = np.max(viterbi[:, t-1] * A[:]['<STOP>'])
+        #     backpointer[q, -1] = np.argmax(viterbi[:, t-1] * A[:]['<STOP>'])
+        
+        best_path_pointer = [np.argmax(viterbi[:, T-1])]
+
+        for t in range(T-1, 0, -1):
+            best_path_pointer.insert(0, backpointer[best_path_pointer[0]][t])
+        
+        return [self.idx2tags[idx] for idx in best_path_pointer]
+
     
     def evaluate(self, sentences, pos_tags):
         """
         Evaluate HMM with anothers splits' sentences and their pos tags
         """
-        pass
+        correct, total = 0, 0
+        for sentence, true_tags in zip(sentences, pos_tags):
+            pred_tags = self.viterbi_alg(sentence)
+            for p, t in zip(pred_tags, true_tags):
+                if p==t:
+                    correct +=1
+            total += len(true_tags)
+
+        return correct / total
