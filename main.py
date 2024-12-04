@@ -14,75 +14,26 @@ from conllu_dataloader import *
 #     save('A.npy', A)
 #     save('B.npy', B)
 
+def csv_to_list_of_lists(file_path):
+    with open(file_path, 'r') as file:
+        reader = csv.reader(file)
+        return [list(row) for row in reader]
+
 if __name__ == "__main__":
-    # corpus = ""
-    # vocab = build_vocab(corpus)
 
-#     tags = ['DET', 'ADJ', 'ADV', 'PREP', 'NOUN', 'VERB', '*', '<STOP>', '<UNK>']
-
-#     sentences = [['I', 'went', 'to', 'Brazil'],
-#                  ['God', 'loves', 'NLP'],
-#                  ['Is', 'me', 'Mario'],
-#                  ['Hello', 'Jeremy'],
-#                  ['<UNK>', '<UNK>', 'me'],
-#                  ['Mario', '<UNK>'],
-#                  ['Mario', '<UNK>', 'loves'],
-#                  ['Hello', 'Jeremy']]
-    
-#     sentences = [[w.lower() if w != '<UNK>' else w for w in s] for s in sentences]
-    
-#     pos_tags = [['NOUN', 'VERB', 'PREP', 'NOUN'],
-#                  ['NOUN', 'VERB', 'NOUN'],
-#                  ['VERB', 'NOUN', 'NOUN'],
-#                  ['ADV', 'NOUN'],
-#                  ['<UNK>', '<UNK>', 'NOUN'],
-#                  ['NOUN', '<UNK>'],
-#                  ['NOUN', '<UNK>', 'VERB'],
-#                  ['ADV', 'NOUN']]
-    
-    # for i in range(len(sentences)):
-    #     sentences[i].insert(0, '*')
-    #     sentences[i].append('<STOP>')
-
-    #     pos_tags[i].insert(0, '*')
-    #     pos_tags[i].append('<STOP>')
-
-#     vocab = set()
-#     for s in sentences:
-#         for word in s:
-#             vocab.add(word.lower())
-#     vocab.add('*')
-#     vocab.add('<STOP>')
         directories = ["datasets/gum", "datasets/ewt"]
         df = load_sentences_from_directories(directories)
-        print(df.iloc[-1])
 
-        # Esandien batez besteko eta luzeera medianak
-        avg_length, median_length = get_sentence_lengths(df)
-        print(f"Average Sentence Length: {avg_length}")
-        print(f"Median Sentence Length: {median_length}")
-
-        # Datu multzoko vocab
         vocabulary = get_vocabulary(df)
-        print(f"Vocabulary Size: {len(vocabulary)}")
-        print(f"Vocabulary Sample: {list(vocabulary)[:10]}")
 
-        # Universal PoS etiketak atera
-        upos_tags = get_upos_tags(df)
-        print(f"Unique UPoS Tags: {upos_tags}")
+        vocabulary.add('*')
+        vocabulary.add("<STOP>")
+        hmm = HMMPOSTagger(csv_to_list_of_lists('./datasets/dataset_pos_tags.csv'), vocabulary)
+        print(csv_to_list_of_lists('./datasets/dataset_pos_tags.csv'))
+        hmm.train(csv_to_list_of_lists('./datasets/dataset_sentences.csv'), csv_to_list_of_lists('./datasets/dataset_pos_tags.csv'))
 
-
-        hmm = HMMPOSTagger(upos_tags, vocabulary)
-
-        hmm.train(df, upos_tags)
-
-    #print(hmm.emission_probs)
-    # print('-----------------')
-    # print(hmm.transition_probs)
-    # print('-----------------')
-    # print(hmm.emission_counts)
-    # print('-----------------')
         test1 = ['Jeremy','Loves','NLP']
+
         test = [['Jeremy', 'Loves', 'NLP'],
                 ['Mario', 'is', 'god'],
                 ['Kaixo', 'zer', 'moduz']]
