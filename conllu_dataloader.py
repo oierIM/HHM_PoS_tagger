@@ -21,6 +21,54 @@ import os
 import pandas as pd
 from conllu import parse_incr
 import csv
+from tqdm import tqdm
+from itertools import cycle
+from shutil import get_terminal_size
+from threading import Thread
+from time import sleep
+
+
+class Loader:
+    def __init__(self, desc="Loading...", end="Done!", timeout=0.1):
+        """
+        A loader-like context manager
+
+        Args:
+            desc (str, optional): The loader's description. Defaults to "Loading...".
+            end (str, optional): Final print. Defaults to "Done!".
+            timeout (float, optional): Sleep time between prints. Defaults to 0.1.
+        """
+        self.desc = desc
+        self.end = end
+        self.timeout = timeout
+
+        self._thread = Thread(target=self._animate, daemon=True)
+        self.steps = ["⢿", "⣻", "⣽", "⣾", "⣷", "⣯", "⣟", "⡿"]
+        self.done = False
+
+    def start(self):
+        self._thread.start()
+        return self
+
+    def _animate(self):
+        for c in cycle(self.steps):
+            if self.done:
+                break
+            print(f"\r{self.desc} {c}", flush=True, end="")
+            sleep(self.timeout)
+
+    def __enter__(self):
+        self.start()
+
+    def stop(self):
+        self.done = True
+        cols = get_terminal_size((80, 20)).columns
+        print("\r" + " " * cols, end="", flush=True)
+        print(f"\r{self.end}", flush=True)
+
+    def __exit__(self, exc_type, exc_value, tb):
+        # handle exceptions with those variables ^
+        self.stop()
 
 def load_conllu_files(directory, prefixes):
     """
@@ -113,23 +161,57 @@ def load_sentences_from_directories(directories, prefixes=[]):
         all_sentences.extend(load_conllu_files(directory, prefixes))
     return sentences_to_dataframe(all_sentences)
 
-def store_sentences_in_csv(df):
+def store_sentences_in_csv(df, path = './datasets/'):
     sentences = []
 
-    for i in range(max(df["sentence_index"])):
+    for i in tqdm(range(max(df["sentence_index"])), desc="Storing sentences..."):
         sentences.append(df[df['sentence_index']==i]["form"].to_list())
 
-    with open('./datasets/dataset_sentences.csv', 'w', newline='') as f:
+    with open(path + 'dataset_sentences.csv', 'w', newline='') as f:
         writer = csv.writer(f)
         writer.writerows(sentences)
 
+def store_pos_tags_in_csv(df, path = './datasets/'):
+    sentences = []
+
+    for i in tqdm(range(max(df["sentence_index"])), desc="Storing pos_tags... (Kaixo Jeremy :P)"):
+        sentences.append(df[df['sentence_index']==i]["form"].to_list())
+
+    with open(path + 'dataset_sentences.csv', 'w', newline='') as f:
+        writer = csv.writer(f)
+        writer.writerows(sentences)
+
+def store_vocab_in_csv(vocab, path = './datasets/'):
+    print('Storing vocab...')
+    with open(path + 'dataset_vocab.csv', 'w', newline='') as f:
+        writer = csv.writer(f)
+        writer.writerow(list(vocab))
+
+def store_vocab_in_csv(tags, path = './datasets/'):
+    print('Storing tags...')
+    with open(path + 'dataset_tags.csv', 'w', newline='') as f:
+        writer = csv.writer(f)
+        writer.writerow(list(tags))
+def store_csvs(df, path = './datasets/'):
+    store_sentences_in_csv(df, path)
+    store_pos_tags_in_csv(df, path)
+
+    store_vocab_in_csv(get_vocabulary(df), path)
+    store_vocab_in_csv(get_upos_tags(df), path)
 
 # Probak egiteko deskomentatu, bestela "import" bidez erabili
 if __name__ == "__main__":
 
     directories = ["datasets/gum", "datasets/ewt"]
+
+
+    loader = Loader("Loading dataset...").start()
+
     df = load_sentences_from_directories(directories)
-    print(df.iloc[-1])
+    
+    loader.stop()
+        
+    print('Loaded! \N{grinning face with smiling eyes}')
 
     # Esandien batez besteko eta luzeera medianak
     avg_length, median_length = get_sentence_lengths(df)
@@ -144,3 +226,7 @@ if __name__ == "__main__":
     # Universal PoS etiketak atera
     upos_tags = get_upos_tags(df)
     print(f"Unique UPoS Tags: {upos_tags}")
+
+    path = './datasets/'
+    store_csvs(df, path)
+    print(f'Dataset stored in {path}')

@@ -19,31 +19,40 @@ def csv_to_list_of_lists(file_path):
         reader = csv.reader(file)
         return [list(row) for row in reader]
 
+def csv_to_list(file_path):
+    with open(file_path, 'r') as file:
+        reader = csv.reader(file)
+        return [row for row in reader][0]
+
 if __name__ == "__main__":
 
-        directories = ["datasets/gum", "datasets/ewt"]
-        df = load_sentences_from_directories(directories)
+	sentences = csv_to_list_of_lists('./datasets/dataset_sentences.csv')
+	pos_tags = csv_to_list_of_lists('./datasets/dataset_pos_tags.csv')
+	vocabulary = csv_to_list('./datasets/dataset_vocab.csv')
+	tags = csv_to_list('./datasets/dataset_tags.csv')
 
-        vocabulary = get_vocabulary(df)
+	tags.append('*')
+	tags.append("<STOP>")
+	vocabulary.append('*')
+	vocabulary.append("<STOP>")
 
-        vocabulary.add('*')
-        vocabulary.add("<STOP>")
-        hmm = HMMPOSTagger(csv_to_list_of_lists('./datasets/dataset_pos_tags.csv'), vocabulary)
-        print(csv_to_list_of_lists('./datasets/dataset_pos_tags.csv'))
-        hmm.train(csv_to_list_of_lists('./datasets/dataset_sentences.csv'), csv_to_list_of_lists('./datasets/dataset_pos_tags.csv'))
+	hmm = HMMPOSTagger(tags, vocabulary)
 
-        test1 = ['Jeremy','Loves','NLP']
+	hmm.train(sentences, pos_tags)
 
-        test = [['Jeremy', 'Loves', 'NLP'],
-                ['Mario', 'is', 'god'],
-                ['Kaixo', 'zer', 'moduz']]
-        tags = [['NOUN', 'VERB', 'NOUN'],
-                ['NOUN', 'VERB', 'NOUN'],
-                ['<UNK>', '<UNK>', '<UNK>']]
-        print(hmm.viterbi_alg(test1))
-    
+	test1 = ['Jeremy','Loves','NLP']
 
-    
+	test = [['Jeremy', 'Loves', 'NLP'],
+			['Mario', 'is', 'god'],
+			['Kaixo', 'zer', 'moduz']]
+	tags = [['NOUN', 'VERB', 'NOUN'],
+			['NOUN', 'VERB', 'NOUN'],
+			['<UNK>', '<UNK>', '<UNK>']]
+
+	print(hmm.viterbi_alg(test1))
+
+
+
 
 
     
