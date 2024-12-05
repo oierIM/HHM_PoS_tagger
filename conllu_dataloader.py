@@ -16,7 +16,6 @@ CoNLL-U format fields (source: https://universaldependencies.org/format.html)
 
 """
 
-
 import os
 import pandas as pd
 from conllu import parse_incr
@@ -29,7 +28,7 @@ from time import sleep
 
 
 class Loader:
-    def __init__(self, desc="Loading...", end="Done!", timeout=0.1):
+    def __init__(self, desc="Loading...", end='Loaded! \N{grinning face with smiling eyes}', timeout=0.1):
         """
         A loader-like context manager
 
@@ -211,8 +210,6 @@ if __name__ == "__main__":
     
     loader.stop()
         
-    print('Loaded! \N{grinning face with smiling eyes}')
-
     # Esandien batez besteko eta luzeera medianak
     avg_length, median_length = get_sentence_lengths(df)
     print(f"Average Sentence Length: {avg_length}")
