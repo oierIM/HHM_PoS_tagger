@@ -29,7 +29,7 @@ if __name__ == "__main__":
 
 	hmm.train(sentences, pos_tags)
 
-	test1 = ['Jeremy','Loves','NLP']
+	test1 = ['I', 'love', 'her', 'big','house','.']
 
 	test = [['Jeremy', 'Loves', 'NLP'],
 			['Mario', 'is', 'god'],
