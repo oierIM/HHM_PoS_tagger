@@ -174,7 +174,7 @@ def store_sentences_in_csv(df, path = './datasets/'):
 def store_pos_tags_in_csv(df, path = './datasets/'):
     sentences = []
 
-    for i in tqdm(range(max(df["sentence_index"])), desc="Storing pos_tags... (Kaixo Jeremy :P)"):
+    for i in tqdm(range(max(df["sentence_index"])), desc="Storing pos_tags... (Kaixo Jeremy \N{sauropod})"):
         sentences.append(df[df['sentence_index']==i]["form"].to_list())
 
     with open(path + 'dataset_sentences.csv', 'w', newline='') as f:
