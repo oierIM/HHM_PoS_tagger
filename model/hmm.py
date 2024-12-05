@@ -64,7 +64,7 @@ class HMMPOSTagger:
 
         sentence = [w.lower() if w.lower() in self.vocab else '<UNK>' for w in sentence]
 
-        print(sentence)
+        # print(sentence)
         #T+1 if in the sentence doesn't appear a <STOP> in the end
         # viterbi = np.zeros((self.Q, T+1))
         # backpointer = np.zeros((self.Q, T+1))

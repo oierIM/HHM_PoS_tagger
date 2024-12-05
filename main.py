@@ -24,12 +24,15 @@ if __name__ == "__main__":
 	tags.append("<STOP>")
 	vocabulary.append('*')
 	vocabulary.append("<STOP>")
-
+     
 	hmm = HMMPOSTagger(tags, vocabulary)
 
 	hmm.train(sentences, pos_tags)
 
-	test1 = ['I', 'love', 'her', 'big','house','.']
+	print([hmm.idx2tags[tag] for tag in hmm.tags])
+
+
+	test1 = ['I', 'asdfasd', 'her']
 
 	test = [['Jeremy', 'Loves', 'NLP'],
 			['Mario', 'is', 'god'],
@@ -39,6 +42,7 @@ if __name__ == "__main__":
 			['<UNK>', '<UNK>', '<UNK>']]
 
 	print(hmm.viterbi_alg(test1))
+	# print(hmm.evaluate(test, tags))
 
 
 
