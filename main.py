@@ -1,5 +1,6 @@
 import numpy as np
 from model.hmm import HMMPOSTagger
+from model.hmm2 import HMMPOSTagger2
 from collections import defaultdict, Counter
 from conllu_dataloader import *
 
@@ -15,10 +16,10 @@ def csv_to_list(file_path):
 
 if __name__ == "__main__":
 
-	sentences = csv_to_list_of_lists('./datasets/dataset_sentences.csv')
-	pos_tags = csv_to_list_of_lists('./datasets/dataset_pos_tags.csv')
-	vocabulary = csv_to_list('./datasets/dataset_vocab.csv')
-	tags = csv_to_list('./datasets/dataset_tags.csv')
+	sentences = csv_to_list_of_lists('./datasets/HMM1/dataset_sentences.csv')
+	pos_tags = csv_to_list_of_lists('./datasets/HMM1/dataset_pos_tags.csv')
+	vocabulary = csv_to_list('./datasets/HMM1/dataset_vocab.csv')
+	tags = csv_to_list('./datasets/HMM1/dataset_tags.csv')
 
 	tags.append('*')
 	tags.append("<STOP>")
@@ -29,7 +30,7 @@ if __name__ == "__main__":
 
 	hmm.train(sentences, pos_tags)
 
-	test1 = ['I', 'love', 'her', 'big','house','.']
+	test1 = ['Jeremy', 'loves', 'his', 'big', 'house', '.']
 
 	test = [['Jeremy', 'Loves', 'NLP'],
 			['Mario', 'is', 'god'],

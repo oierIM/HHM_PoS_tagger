@@ -1,7 +1,7 @@
 import numpy as np
 from collections import defaultdict, Counter
-
-class HMMPOSTagger:
+#DUDA EA BESTE HMM BAT BEHARREZKOA DEN <UNK>-KIN ENTRENATZEKO
+class HMMPOSTagger2:
     def __init__(self, tags, vocab):
         self.tags2idx = {tag: i for i, tag in enumerate(tags)}
         self.idx2tags = {i: tag for i, tag in enumerate(tags)}
