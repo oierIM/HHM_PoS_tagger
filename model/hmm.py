@@ -15,17 +15,16 @@ class HMMPOSTagger:
         self.word_counts = Counter() #To count each word
         self.tag_counts = Counter()
 
-    def train(self, sentences, pos_tags):
+    def train(self, sentences, pos_tags, change_vocab=False):
         """
         Training the HMM given sentences and their pos_tags
         """
 
-        self.get_counts(sentences, pos_tags)
+        self.get_counts(sentences, pos_tags, change_vocab)
         self.get_probs()
 
         
-    def get_counts(self, sentences, pos_tags):
-
+    def get_counts(self, sentences, pos_tags, change_vocab = False):
 
         for sentence, tags in zip(sentences, pos_tags):
             prev_tag = self.tags2idx['*']
@@ -40,6 +39,28 @@ class HMMPOSTagger:
                 prev_tag = tag_idx
             self.transition_counts[prev_tag]["<STOP>"] +=1
 
+        if change_vocab:
+            vocab = []
+            unknowns = []
+            for w in self.word_counts.keys(): 
+                if self.word_counts[w] > 4:
+                    vocab.append(w)
+                else:
+                    unknowns.append(w)
+            self.vocab = vocab
+
+            for u in unknowns:
+                for tag in self.tags2idx.values():
+                    # print(self.idx2tags[tag])
+                    # if self.emission_counts[tag][u] > 0:
+                    if tag==18 or tag==19:
+                        break
+                    self.emission_counts[tag]['<UNK>'] += self.emission_counts[tag][u]
+                    self.emission_counts[tag].pop(u)
+
+
+
+
     def get_probs(self):
         
         #Transition probs
@@ -51,6 +72,8 @@ class HMMPOSTagger:
         #Emmision probs
         for tag, words in self.emission_counts.items():
             total_emissions = sum(words.values())
+            # if self.idx2tags[tag]=='*' or self.idx2tags[tag]=='<STOP>':
+            #     break
             for word, count in words.items():
                 self.emission_probs[tag][word] = count / total_emissions
     
@@ -99,7 +122,7 @@ class HMMPOSTagger:
         for t in range(T-1, 0, -1):
             best_path_pointer.insert(0, backpointer[best_path_pointer[0]][t])
         
-        return [self.idx2tags[idx] for idx in best_path_pointer]
+        return sentence, [self.idx2tags[idx] for idx in best_path_pointer]
 
     
     def evaluate(self, sentences, pos_tags):

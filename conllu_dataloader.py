@@ -163,7 +163,7 @@ def load_sentences_from_directories(directories, prefixes=[]):
 def store_sentences_in_csv(df, path = './datasets/'):
     sentences = []
 
-    for i in tqdm(range(max(df["sentence_index"])), desc="Storing sentences..."):
+    for i in tqdm(range(max(df["sentence_index"])), desc=f"Storing sentences in {path} dataset_sentences.csv"):
         sentences.append(df[df['sentence_index']==i]["form"].to_list())
 
     with open(path + 'dataset_sentences.csv', 'w', newline='') as f:
@@ -173,21 +173,21 @@ def store_sentences_in_csv(df, path = './datasets/'):
 def store_pos_tags_in_csv(df, path = './datasets/'):
     sentences = []
 
-    for i in tqdm(range(max(df["sentence_index"])), desc="Storing pos_tags... (Kaixo Jeremy \N{sauropod})"):
-        sentences.append(df[df['sentence_index']==i]["form"].to_list())
+    for i in tqdm(range(max(df["sentence_index"])), desc=f"Storing pos_tags in {path} dataset_pos_tags.csv (Kaixo Jeremy \N{sauropod})"):
+        sentences.append(df[df['sentence_index']==i]["upos"].to_list())
 
-    with open(path + 'dataset_sentences.csv', 'w', newline='') as f:
+    with open(path + 'dataset_pos_tags.csv', 'w', newline='') as f:
         writer = csv.writer(f)
         writer.writerows(sentences)
 
 def store_vocab_in_csv(vocab, path = './datasets/'):
-    print('Storing vocab...')
+    print(f'Storing vocab in {path} dataset_vocab.csv')
     with open(path + 'dataset_vocab.csv', 'w', newline='') as f:
         writer = csv.writer(f)
         writer.writerow(list(vocab))
 
 def store_vocab_in_csv(tags, path = './datasets/'):
-    print('Storing tags...')
+    print(f'Storing tags in {path} dataset_tags.csv')
     with open(path + 'dataset_tags.csv', 'w', newline='') as f:
         writer = csv.writer(f)
         writer.writerow(list(tags))
@@ -226,4 +226,4 @@ if __name__ == "__main__":
 
     path = './datasets/'
     store_csvs(df, path)
-    print(f'Dataset stored in {path}')
+    print(u'Dataset stored! \u2713')

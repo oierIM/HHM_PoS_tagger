@@ -26,13 +26,21 @@ if __name__ == "__main__":
 	vocabulary.append("<STOP>")
      
 	hmm = HMMPOSTagger(tags, vocabulary)
+	hmm_ours = HMMPOSTagger(tags, vocabulary)
 
-	hmm.train(sentences, pos_tags)
+	hmm.train(sentences, pos_tags, True)
+     
+	hmm_ours.train(sentences, pos_tags)
 
-	print([hmm.idx2tags[tag] for tag in hmm.tags])
+	# print([hmm.idx2tags[tag] for tag in hmm.tags])
+     
 
+	# for i, w in hmm.emission_probs.items():
+	# 	for ww in w.items():
+	# 		print(ww)
+	# print(hmm.idx2tags[18])
 
-	test1 = ['I', 'asdfasd', 'her']
+	test1 = ['I', 'love', 'Jeremy']
 
 	test = [['Jeremy', 'Loves', 'NLP'],
 			['Mario', 'is', 'god'],
@@ -41,7 +49,9 @@ if __name__ == "__main__":
 			['NOUN', 'VERB', 'NOUN'],
 			['<UNK>', '<UNK>', '<UNK>']]
 
-	print(hmm.viterbi_alg(test1))
+	viterbi_result = hmm.viterbi_alg(test1)
+	print(f'Sentence = {viterbi_result[0]}')
+	print(f'Tags applied = {viterbi_result[1]}')
 	# print(hmm.evaluate(test, tags))
 
 
