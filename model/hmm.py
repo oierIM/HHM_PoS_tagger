@@ -2,7 +2,20 @@ import numpy as np
 from collections import defaultdict, Counter
 
 class HMMPOSTagger:
+    """
+    Hitz-Marko Ezkutuen (HMM) oinarritutako Hitzen Etiketatzailea.
+    Klase honek HMM bat erabiltzen du trantsizio eta emisio probabilitateak kalkulatzeko, 
+    trebakuntza datuetatik abiatuta. Viterbi algoritmoa erabiltzen du etiketa sekuentzia 
+    probableena aurkitzeko.
+    """
     def __init__(self, tags, vocab):
+        """
+        HMMPOSTagger objektua hasieratzen du emandako etiketekin eta hiztegiarekin.
+        
+        Arg:
+            tags (zerrenda): Posibleak diren hitz-etiketak.
+            vocab (zerrenda): Ezagutzen diren hitzen hiztegia.
+        """
         self.tags2idx = {tag: i for i, tag in enumerate(tags)}
         self.idx2tags = {i: tag for i, tag in enumerate(tags)}
         self.tags = list(self.idx2tags.keys())
@@ -17,7 +30,12 @@ class HMMPOSTagger:
 
     def train(self, sentences, pos_tags, change_vocab=False):
         """
-        Training the HMM given sentences and their pos_tags
+        HMM entrenatzen du esaldi eta dagokien POS etiketak erabiliz.
+
+        Arg:
+            sentences (zerrenda-zerrendak): Esaldi bakoitzaren hitzak dituen azpizerrendak.
+            pos_tags (zerrenda-zerrendak): Esaldi bakoitzari dagozkion POS etiketak.
+            change_vocab (bool): True baldin badago, hiztegia eguneratuko du hitzen maiztasunaren arabera.
         """
 
         self.get_counts(sentences, pos_tags, change_vocab)
@@ -25,7 +43,14 @@ class HMMPOSTagger:
 
         
     def get_counts(self, sentences, pos_tags, change_vocab = False):
-
+        """
+        Entrenamendu datuetatik trantsizio, emisio, hitz eta etiketen zenbaketak kalkulatzen ditu.
+        
+        Arg:
+            sentences (zerrenda-zerrendak): Entrenamendu datuen esaldiak.
+            pos_tags (zerrenda-zerrendak): Esaldi bakoitzari dagozkion POS etiketak.
+            change_vocab (bool): True baldin badago, hiztegia eguneratuko du ohikoak ez diren hitzak baztertuz.
+        """
         for sentence, tags in zip(sentences, pos_tags):
             prev_tag = self.tags2idx['*']
             for word, tag in zip(sentence, tags):
@@ -62,6 +87,9 @@ class HMMPOSTagger:
 
 
     def get_probs(self):
+        """
+        Zenbaketak probabilitate bihurtzen ditu trantsizio eta emisioetarako.
+        """
         
         #Transition probs
         for prev_tag, next_tags in self.transition_counts.items():
@@ -72,50 +100,37 @@ class HMMPOSTagger:
         #Emmision probs
         for tag, words in self.emission_counts.items():
             total_emissions = sum(words.values())
-            # if self.idx2tags[tag]=='*' or self.idx2tags[tag]=='<STOP>':
-            #     break
             for word, count in words.items():
                 self.emission_probs[tag][word] = count / total_emissions
     
     def viterbi_alg(self, sentence: list[int]):
         """
-        Function that executes the Vilterbi algorithm to find the best tags for a given sentence
+        Viterbi algoritmoa inplementatzen du esaldi baterako etiketarik probableenak aurkitzeko.
+        
+        Arg:
+            sentence (zerrenda): Esaldiaren hitzen (tokenen) zerrenda.
+        
+        Itzultzen du:
+            tuple: (hitzen zerrenda, aurresandako POS etiketen sekuentzia)
         """
         A = self.transition_probs
         B = self.emission_probs
         T = len(sentence)
+        
 
         sentence = [w.lower() if w.lower() in self.vocab else '<UNK>' for w in sentence]
-
-        # print(sentence)
-        #T+1 if in the sentence doesn't appear a <STOP> in the end
-        # viterbi = np.zeros((self.Q, T+1))
-        # backpointer = np.zeros((self.Q, T+1))
         
         viterbi = np.zeros((self.Q, T))
         backpointer = np.zeros((self.Q, T), dtype=int)
  
         for tag_idx in range(self.Q):
-            # if sentence[0] == '<UNK>':
-            #     viterbi[self.tags2idx['<UNK>']][0] = 1
-            #     backpointer[self.tags2idx['<UNK>']][0] = self.tags2idx['<UNK>']
-            #     break
             viterbi[tag_idx][0] = (A[self.tags2idx['*']][tag_idx] * B[tag_idx].get(sentence[0], 1e-6))
 
         for t in range(1, T):
-            # if sentence[t] == '<UNK>':
-            #     viterbi[self.tags2idx['<UNK>']][t] = 1
-            #     backpointer[self.tags2idx['<UNK>']][t] = self.tags2idx['<UNK>']
-            #     continue
             for q in range(self.Q):
                 
                 viterbi[q, t] = np.max([viterbi[q_p, t-1] * A[q_p][q] * B[q].get(sentence[t], 1e-6) for q_p in range(self.Q)])
                 backpointer[q, t] = np.argmax([viterbi[q_p, t-1] * A[q_p][q] * B[q].get(sentence[t], 1e-6) for q_p in range(self.Q)])
-        
-        #Last iteration for <STOP>
-        # for q in self.Q:
-        #     viterbi[q, -1] = np.max(viterbi[:, t-1] * A[:]['<STOP>'])
-        #     backpointer[q, -1] = np.argmax(viterbi[:, t-1] * A[:]['<STOP>'])
         
         best_path_pointer = [np.argmax(viterbi[:, T-1])]
 
@@ -127,7 +142,14 @@ class HMMPOSTagger:
     
     def evaluate(self, sentences, pos_tags):
         """
-        Evaluate HMM with anothers splits' sentences and their pos tags
+        HMM etiketailea ebaluatzen du proba-datuetan.
+        
+        Arg:
+            sentences (zerrenda-zerrendak): Proba esaldiak.
+            pos_tags (zerrenda-zerrendak): Esaldi bakoitzari dagozkion egiazko POS etiketak.
+        
+        Itzultzen du:
+            float: Etiketatzailearen zehaztasuna proba-datuetan.
         """
         correct, total = 0, 0
         for sentence, true_tags in zip(sentences, pos_tags):

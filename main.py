@@ -28,19 +28,11 @@ if __name__ == "__main__":
 	hmm = HMMPOSTagger(tags, vocabulary)
 	hmm_ours = HMMPOSTagger(tags, vocabulary)
 
-	hmm.train(sentences, pos_tags, True)
+	hmm.train(sentences, pos_tags, change_vocab = True)
      
-	hmm_ours.train(sentences, pos_tags)
+	hmm_ours.train(sentences, pos_tags, change_vocab = False)
 
-	# print([hmm.idx2tags[tag] for tag in hmm.tags])
-     
-
-	# for i, w in hmm.emission_probs.items():
-	# 	for ww in w.items():
-	# 		print(ww)
-	# print(hmm.idx2tags[18])
-
-	test1 = ['I', 'love', 'Jeremy']
+	test1 = ['her','dunking','was','suprememeably','supreme']
 
 	test = [['Jeremy', 'Loves', 'NLP'],
 			['Mario', 'is', 'god'],
@@ -49,6 +41,11 @@ if __name__ == "__main__":
 			['NOUN', 'VERB', 'NOUN'],
 			['<UNK>', '<UNK>', '<UNK>']]
 
+	viterbi_result = hmm_ours.viterbi_alg(test1)
+	print(f'Original sentence= {test1}')
+	print(f'Sentence = {viterbi_result[0]}')
+	print(f'Tags applied = {viterbi_result[1]}')
+     
 	viterbi_result = hmm.viterbi_alg(test1)
 	print(f'Sentence = {viterbi_result[0]}')
 	print(f'Tags applied = {viterbi_result[1]}')
