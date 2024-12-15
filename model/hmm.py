@@ -152,11 +152,13 @@ class HMMPOSTagger:
             float: Etiketatzailearen zehaztasuna proba-datuetan.
         """
         correct, total = 0, 0
+        tags = []
         for sentence, true_tags in zip(sentences, pos_tags):
-            pred_tags = self.viterbi_alg(sentence)
+            pred_tags = self.viterbi_alg(sentence)[1]
+            tags.append(pred_tags)
             for p, t in zip(pred_tags, true_tags):
                 if p==t:
                     correct +=1
             total += len(true_tags)
 
-        return correct / total
+        return (correct/total, tags)
