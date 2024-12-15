@@ -1,7 +1,5 @@
-import numpy as np
 from model.hmm import HMMPOSTagger
-from collections import defaultdict, Counter
-from conllu_dataloader import *
+from utils.conllu_dataloader import *
 
 def csv_to_list_of_lists(file_path):
     with open(file_path, 'r') as file:
