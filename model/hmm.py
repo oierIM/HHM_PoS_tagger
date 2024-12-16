@@ -154,6 +154,7 @@ class HMMPOSTagger:
         """
         print("Evaluating...")
         correct, total = 0, 0
+
         all_true_tags = []
         all_pred_tags = []
 
@@ -162,6 +163,7 @@ class HMMPOSTagger:
             pred_tags = self.viterbi_alg(sentence)
             all_true_tags.extend(true_tags)
             all_pred_tags.extend(pred_tags)
+
             for p, t in zip(pred_tags, true_tags):
                 if p == t:
                     correct += 1

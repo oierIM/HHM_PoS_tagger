@@ -1,5 +1,5 @@
-import numpy as np
 from model.hmm import HMMPOSTagger
+
 from collections import defaultdict, Counter
 import utils.visualization_functions as visualization_functions
 import utils.conllu_dataloader as conllu_dataloader

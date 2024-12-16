@@ -1,3 +1,21 @@
+
+"""
+CoNLL-U format fields (source: https://universaldependencies.org/format.html)
+
+
+    ID: Word index, integer starting at 1 for each new sentence; may be a range for multiword tokens; may be a decimal number for empty nodes (decimal numbers can be lower than 1 but must be greater than 0).
+    FORM: Word form or punctuation symbol.
+    LEMMA: Lemma or stem of word form.
+    UPOS: Universal part-of-speech tag.
+    XPOS: Optional language-specific (or treebank-specific) part-of-speech / morphological tag; underscore if not available.
+    FEATS: List of morphological features from the universal feature inventory or from a defined language-specific extension; underscore if not available.
+    HEAD: Head of the current word, which is either a value of ID or zero (0).
+    DEPREL: Universal dependency relation to the HEAD (root iff HEAD = 0) or a defined language-specific subtype of one.
+    DEPS: Enhanced dependency graph in the form of a list of head-deprel pairs.
+    MISC: Any other annotation.
+
+
+"""
 import os
 import pandas as pd
 from conllu import parse_incr
@@ -8,6 +26,7 @@ from shutil import get_terminal_size
 from threading import Thread
 from time import sleep
 
+
 class Loader:
     def __init__(self, desc="Datuak kargatzen...", end='Datuak kargatuta! \N{grinning face with smiling eyes}', timeout=0.1):
         """
@@ -16,6 +35,7 @@ class Loader:
         Args:
             desc (str): Deskribapena.
             end (str): Amaierako mezua.
+
             timeout (float): Tartea (segundutan). Defaults to 0.1.
         """
         self.desc = desc
@@ -84,6 +104,7 @@ def sentences_to_dataframe(sentences):
                     "upos": token.get("upos"),          # PoS etiketa unibertsala
                     "xpos": token.get("xpos"),          # Treebank PoS etiketa edo etiketa morfologikoa
                     "feats": token.get("feats"),        # Ezaugarri morfologikoak
+
                     "head": token.get("head"),          # Hitzaren burua
                     "deprel": token.get("deprel"),      # Buruarekiko dependentziak
                     "deps": token.get("deps"),          # Dependentzia grafoa
@@ -112,6 +133,7 @@ def get_vocabulary(df):
 
 def get_sentence_lengths(df):
     """Esaldien batez besteko eta mediana luzerak kalkulatu."""
+
     sentence_lengths = df.groupby('sentence_index')['id'].count()
     avg_length = sentence_lengths.mean()
     median_length = sentence_lengths.median()
@@ -175,3 +197,4 @@ def load_datasets(already_loaded=False):
         print(u'Datu multzoak gorde dira! \u2713')
     else:
         print("Skipping preprocessing of the datasets...")
+
