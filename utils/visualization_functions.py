@@ -5,7 +5,7 @@ matplotlib.use('Agg')
 import seaborn as sns
 import numpy as np
 
-def plot_confusion_matrix(cm, unique_tags, title):
+def plot_confusion_matrix(cm, unique_tags, title, do_plot=True):
     """
     Plots the Confusion Matrix.
 
@@ -21,9 +21,12 @@ def plot_confusion_matrix(cm, unique_tags, title):
     plt.xlabel("Predicted Tags")
     plt.ylabel("True Tags")
     plt.title(title)
-    plt.savefig("confussion_matrix")
+    if do_plot:
+        plt.show()
+    else:
+        plt.savefig("confussion_matrix")
 
-def plot_f1_scores(unique_tags, precision, recall, f1_scores, title):
+def plot_f1_scores(unique_tags, precision, recall, f1_scores, title, do_plot=True):
     """
     Plots the Precision, Recall and F1-scores for each tag as grouped bar plots.
     The average F1-score is shown as a horizontal line.
@@ -62,5 +65,7 @@ def plot_f1_scores(unique_tags, precision, recall, f1_scores, title):
     plt.legend()
     plt.tight_layout()
 
-    plt.savefig("f1-scores", dpi=300)
-    plt.show()
+    if do_plot:
+        plt.show()
+    else:
+        plt.savefig("f1-scores", dpi=300)
