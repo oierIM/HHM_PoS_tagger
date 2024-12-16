@@ -137,7 +137,7 @@ class HMMPOSTagger:
         for t in range(T-1, 0, -1):
             best_path_pointer.insert(0, backpointer[best_path_pointer[0]][t])
         
-        return sentence, [self.idx2tags[idx] for idx in best_path_pointer]
+        return [self.idx2tags[idx] for idx in best_path_pointer]
 
     
     def evaluate(self, sentences, pos_tags):
@@ -151,6 +151,7 @@ class HMMPOSTagger:
         Itzultzen du:
             float: Etiketatzailearen zehaztasuna proba-datuetan.
         """
+        print("Evaluating...")
         correct, total = 0, 0
         for sentence, true_tags in zip(sentences, pos_tags):
             pred_tags = self.viterbi_alg(sentence)
