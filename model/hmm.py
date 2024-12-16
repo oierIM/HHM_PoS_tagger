@@ -138,18 +138,40 @@ class HMMPOSTagger:
         return [self.idx2tags[idx] for idx in best_path_pointer]
 
     
-    def evaluate(self, sentences, pos_tags):
+    def evaluate(self, sentences, pos_tags, do_mapping=False):
         """
         HMM etiketailea ebaluatzen du proba-datuetan.
         
         Arg:
             sentences (zerrenda-zerrendak): Proba esaldiak.
             pos_tags (zerrenda-zerrendak): Esaldi bakoitzari dagozkion egiazko POS etiketak.
+            do_mapping (bool): NLTK-rako mapping egin edo ez
         
         Itzultzen du:
             float: Etiketatzailearen zehaztasuna proba-datuetan.
         """
         print("Evaluating...")
+
+        map_pos_tags = {'ADJ': 'ADJ',
+                'PROPN':'NOUN', 
+                'NOUN': 'NOUN',
+                'PRON':'PRON',
+                'CCONJ':'CONJ',
+                'ADV':'ADV',
+                'X':'X',
+                'VERB':'VERB',
+                '_':'_',
+                'AUX':'VERB',
+                'SYM':'.',
+                'NUM':'NUM',
+                'PART':'PRT',
+                'DET':'DET',
+                'INTJ':'INTJ',
+                'ADP':'ADP',
+                'SCONJ':'CONJ',
+                'PUNCT':'.',
+                }
+        
         correct, total = 0, 0
 
         all_true_tags = []
@@ -158,6 +180,9 @@ class HMMPOSTagger:
         # Evaluate and collect predictions
         for sentence, true_tags in zip(sentences, pos_tags):
             pred_tags = self.viterbi_alg(sentence)
+            
+            if do_mapping:
+                pred_tags = [map_pos_tags[tag] for tag in pred_tags]
             all_true_tags.extend(true_tags)
             all_pred_tags.extend(pred_tags)
 

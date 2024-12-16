@@ -20,7 +20,7 @@ if __name__ == "__main__":
 
 	conllu_dataloader.load_datasets(already_loaded=False)
      
-	print("\n\n")
+	print("\n")
 
 	train_sentences = csv_to_list_of_lists('./datasets/train_dev_sentences.csv')
 	train_pos_tags = csv_to_list_of_lists('./datasets/train_dev_pos_tags.csv')
@@ -55,27 +55,6 @@ if __name__ == "__main__":
 	print(f"Test precision : {precision1}")
 	print(f"Test recall: {recall1}")
 	print(f"Test f1-score: {fscore1}")
-    
-
-	map_pos_tags = {'ADJ': 'ADJ',
-                'PROPN':'NOUN', 
-                'NOUN': 'NOUN',
-                'PRON':'PRON',
-                'CCONJ':'CONJ',
-                'ADV':'ADV',
-                'X':'X',
-                'VERB':'VERB',
-                '_':'_',
-                'AUX':'VERB',
-                'SYM':'.',
-                'NUM':'NUM',
-                'PART':'PRT',
-                'DET':'DET',
-                'INTJ':'INTJ',
-                'ADP':'ADP',
-                'SCONJ':'CONJ',
-                'PUNCT':'.',
-                }
     
 	print("\nOUR VITERBI APPROACH:")
 	acc2, cm2, ut2, precision2, recall2, fscore2 = hmm_ours.evaluate(test_sentences, test_pos_tags)
