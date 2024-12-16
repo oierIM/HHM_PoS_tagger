@@ -6,6 +6,7 @@ import utils.conllu_dataloader as conllu_dataloader
 import utils.out_of_domain_evaluation as ood_dataloader
 import csv
 import time
+import numpy as np
 
 def csv_to_list_of_lists(file_path):
     with open(file_path, 'r') as file:
@@ -19,7 +20,7 @@ def csv_to_list(file_path):
 
 if __name__ == "__main__":
 
-	conllu_dataloader.load_datasets(already_loaded=False)
+	conllu_dataloader.load_datasets(already_loaded=True)
      
 	print("\n")
 
@@ -42,7 +43,7 @@ if __name__ == "__main__":
 	vocabulary.append('*')
 	vocabulary.append("<STOP>")
     
-	print("Training models...")
+	print("\nTraining models...")
 	start = time.time()
 	hmm = HMMPOSTagger(tags, vocabulary)
 	hmm_ours = HMMPOSTagger(tags, vocabulary)
@@ -54,35 +55,38 @@ if __name__ == "__main__":
 	end = time.time()
 	print(f"Training completed in {end-start}")
     
+	print("NOTE: All models are allways trained with Universal Dependencies PoS tags.")
+	print("Re-mapping is only applied during evaluation.")
 	
-	# print("\n\nOTHER VITERBI APPROACH:")
-	# acc1, cm1, ut1, precision1, recall1, fscore1  = hmm.evaluate(test_sentences, test_pos_tags)
-	# print(f"Test accuracy: {acc1}")
-	# print(f"Test precision : {precision1}")
-	# print(f"Test recall: {recall1}")
-	# print(f"Test f1-score: {fscore1}")
-    
-	# print("\nOUR VITERBI APPROACH:")
-	# acc2, cm2, ut2, precision2, recall2, fscore2 = hmm_ours.evaluate(test_sentences, test_pos_tags)
-	# print(f"Test accuracy: {acc2}")
-	# print(f"Test precision : {precision2}")
-	# print(f"Test recall: {recall2}")
-	# print(f"Test f1-score: {fscore2}")
-    
+	
+	print("\n\n\033[1mIn-Domain with no re-mapping\033[0m (Original Universal Dependencies tags):")
+	acc1, cm1, ut1, precision1, recall1, fscore1  = hmm_ours.evaluate(test_sentences, test_pos_tags, mapping_mode="in_domain_no_mapping")
+	print(f" - Test accuracy: {acc1}")
+	print(f" - Test precision : {np.mean(precision1)}")
+	print(f" - Test recall: {np.mean(recall1)}")
+	print(f" - Test f1-score: {np.mean(fscore1)}")
+	visualization_functions.plot_confusion_matrix(cm1, ut1, title="In-Domain PoS Tagging Confusion Matrix")
+	visualization_functions.plot_f1_scores(ut1, precision1, recall1, fscore1, title="In-Domain Precision, Recall and F1-Scores for Each PoS Tag")
 
-	print("\n\nOOD TEST:")
-	acc1, cm1, ut1, precision1, recall1, fscore1  = hmm.evaluate(ood_test_sentences, ood_test_tags, mapping_mode="out_domain_mapping")
-	print(f"Test accuracy: {acc1}")
-	print(f"Test precision : {precision1}")
-	print(f"Test recall: {recall1}")
-	print(f"Test f1-score: {fscore1}")
-	visualization_functions.plot_confusion_matrix(cm1, ut1)
     
-	# visualization_functions.plot_confusion_matrix(cm1, ut1)
-	# visualization_functions.plot_confusion_matrix(cm2, ut2)
-     
-	# visualization_functions.plot_f1_scores(ut1, precision1, recall1, fscore1)
+	print("\n\033[1mIn-Domain with re-mapped PoS tags\033[0m (NLTK universal tags):")
+	acc2, cm2, ut2, precision2, recall2, fscore2 = hmm_ours.evaluate(test_sentences, test_pos_tags, mapping_mode="in_domain_mapping")
+	print(f" - Test accuracy: {acc2}")
+	print(f" - Test precision : {np.mean(precision2)}")
+	print(f" - Test recall: {np.mean(recall2)}")
+	print(f" - Test f1-score: {np.mean(fscore2)}")
+	visualization_functions.plot_confusion_matrix(cm2, ut2, title="In-Domain Re-Mapped PoS Tagging Confusion Matrix")
+	visualization_functions.plot_f1_scores(ut2, precision2, recall2, fscore2, title="In-Domain Precision, Recall and F1-Scores for Each Re-Mapped PoS Tag")
 
+
+	print("\n\n\033[1mOut-of-Domain with re-mapped PoS tags\033[0m (NLTK universal tags):")
+	acc3, cm3, ut3, precision3, recall3, fscore3  = hmm_ours.evaluate(ood_test_sentences, ood_test_tags, mapping_mode="out_domain_mapping")
+	print(f" - Test accuracy: {acc3}")
+	print(f" - Test precision : {np.mean(precision3)}")
+	print(f" - Test recall: {np.mean(recall3)}")
+	print(f" - Test f1-score: {np.mean(fscore3)}")
+	visualization_functions.plot_confusion_matrix(cm3, ut3, title="Out-of-Domain PoS Tagging Confusion Matrix")
+	visualization_functions.plot_f1_scores(ut3, precision3, recall3, fscore3, title="Out-of-Domain Precision, Recall and F1-Scores for Each PoS Tag")
 
 
 

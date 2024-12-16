@@ -12,7 +12,7 @@ def plot_confusion_matrix(cm, unique_tags, title):
     Args:
     cm (sklearn.metrics.confusion_matrix): Confusion matrix.
     unique_tags (list of str): List of unique PoS tags.
-    title (str): Title to use. Some posible titles: "In-Domain Confusion Matrix of POS Tagging", "Out-of-Domain Confusion Matrix of POS Tagging", ...
+    title (str): Title to use. Some posible titles: "In-Domain PoS Tagging Confusion Matrix", "Out-of-Domain PoS Tagging Confusion Matrix", ...
     """
     plt.figure(figsize=(12, 8))
     sns.heatmap(
@@ -33,7 +33,7 @@ def plot_f1_scores(unique_tags, precision, recall, f1_scores, title):
     precision (list of float): Precision scores for each tag.
     recall (list of float): Recall scores for each tag.
     f1_scores (list of float): F1-scores for each tag.
-    title (str): Title to use. Some posible titles: "In-Domain Precision, Recall and F1-Scores for Each POS Tag", "Out-of-Domain Precision, Recall and F1-Scores for Each POS Tag", ...
+    title (str): Title to use. Some posible titles: "In-Domain Precision, Recall and F1-Scores for Each PoS Tag", "Out-of-Domain Precision, Recall and F1-Scores for Each PoS Tag", ...
     """
     # Calculate the average F1 score
     avg_f1_score = np.mean(f1_scores)

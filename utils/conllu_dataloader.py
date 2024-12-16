@@ -175,7 +175,7 @@ def store_csvs(df, path, prefix):
 def load_datasets(already_loaded=False):
     directories = ["datasets/gum", "datasets/ewt"]
     if(not already_loaded):
-        loader = Loader("Datu multzoak kargatzen...").start()
+        loader = Loader("Loading datasets...").start()
 
         train_dev_df = load_train_and_dev_data(directories)
         test_df = load_test_data(directories)
@@ -194,7 +194,7 @@ def load_datasets(already_loaded=False):
         store_csvs(train_dev_df, path, 'train_dev')
         store_csvs(test_df, path, 'test')
 
-        print(u'Datu multzoak gorde dira! \u2713')
+        print(u'Datasets saved! \u2713')
     else:
-        print("Skipping preprocessing of the datasets...")
+        print("Skipping preprocessing of the datasets...\nChange the 'already_loaded' parameter to False to change this behaviour.")
 
