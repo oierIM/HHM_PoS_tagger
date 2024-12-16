@@ -1,7 +1,8 @@
 import numpy as np
 from model.hmm import HMMPOSTagger
 from collections import defaultdict, Counter
-import conllu_dataloader
+import utils.visualization_functions as visualization_functions
+import utils.conllu_dataloader as conllu_dataloader
 import csv
 import time
 
@@ -17,7 +18,7 @@ def csv_to_list(file_path):
 
 if __name__ == "__main__":
 
-	conllu_dataloader.load_datasets()
+	conllu_dataloader.load_datasets(already_loaded=True)
      
 	print("\n\n")
 
@@ -35,7 +36,7 @@ if __name__ == "__main__":
 	vocabulary.append('*')
 	vocabulary.append("<STOP>")
     
-	print("\n\nTraining models...")
+	print("Training models...")
 	start = time.time()
 	hmm = HMMPOSTagger(tags, vocabulary)
 	hmm_ours = HMMPOSTagger(tags, vocabulary)
@@ -47,33 +48,24 @@ if __name__ == "__main__":
 	end = time.time()
 	print(f"Training completed in {end-start}")
     
-
 	
-	test1 = ['her','dunking','was','suprememeably','supreme']
-
-	test = [['Jeremy', 'Loves', 'NLP'],
-			['Mario', 'is', 'god'],
-			['Kaixo', 'zer', 'moduz']]
+	print("\n\nOTHER VITERBI APPROACH:")
+	acc1, cm1, ut1, precision1, recall1, fscore1  = hmm.evaluate(test_sentences, test_pos_tags)
+	print(f"Test accuracy: {acc1}")
+	print(f"Test precision : {precision1}")
+	print(f"Test recall: {recall1}")
+	print(f"Test f1-score: {fscore1}")
     
-	tags = [['NOUN', 'VERB', 'NOUN'],
-			['NOUN', 'VERB', 'NOUN'],
-			['<UNK>', '<UNK>', '<UNK>']]
-
-	viterbi_result = hmm_ours.viterbi_alg(test1)
-	print(f'Original sentence= {test1}')
-	print(f'Sentence = {viterbi_result[0]}')
-	print(f'Tags applied = {viterbi_result[1]}')
+	print("\nOUR VITERBI APPROACH:")
+	acc2, cm2, ut2, precision2, recall2, fscore2 = hmm_ours.evaluate(test_sentences, test_pos_tags)
+	print(f"Test accuracy: {acc2}")
+	print(f"Test precision : {precision2}")
+	print(f"Test recall: {recall2}")
+	print(f"Test f1-score: {fscore2}")
      
-	viterbi_result = hmm.viterbi_alg(test1)
-	print(f'Sentence = {viterbi_result[0]}')
-	print(f'Tags applied = {viterbi_result[1]}')
-    
-	
-	print("OTHER VITERBI APPROACH:")
-	print({f"Evaluation accuracy: {hmm.evaluate(test_sentences, test_pos_tags)}"})
-    
-	print("OUR VITERBI APPROACH:")
-	print(f"Evaluation accuracy: {hmm_ours.evaluate(test_sentences, test_pos_tags)}")
+	visualization_functions.plot_confusion_matrix(cm1, ut1)
+	visualization_functions.plot_confusion_matrix(cm2, ut2)
+
 
 
 

@@ -1,4 +1,5 @@
 import numpy as np
+from sklearn.metrics import confusion_matrix, precision_recall_fscore_support
 from collections import defaultdict, Counter
 
 class HMMPOSTagger:
@@ -153,11 +154,22 @@ class HMMPOSTagger:
         """
         print("Evaluating...")
         correct, total = 0, 0
+        all_true_tags = []
+        all_pred_tags = []
+
+        # Evaluate and collect predictions
         for sentence, true_tags in zip(sentences, pos_tags):
             pred_tags = self.viterbi_alg(sentence)
+            all_true_tags.extend(true_tags)
+            all_pred_tags.extend(pred_tags)
             for p, t in zip(pred_tags, true_tags):
-                if p==t:
-                    correct +=1
+                if p == t:
+                    correct += 1
             total += len(true_tags)
 
-        return correct / total
+        unique_tags = sorted(set(all_true_tags + all_pred_tags))
+        cm = confusion_matrix(all_true_tags, all_pred_tags, labels=unique_tags)
+
+        precision, recall, f1, _ = precision_recall_fscore_support(all_true_tags, all_pred_tags)
+
+        return correct / total, cm, unique_tags, precision, recall, f1

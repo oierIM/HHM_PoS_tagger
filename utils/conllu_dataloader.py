@@ -150,26 +150,28 @@ def store_csvs(df, path, prefix):
     store_vocab_in_csv(get_upos_tags(df), path, f'tagset.csv')
 
 
-def load_datasets():
+def load_datasets(already_loaded=False):
     directories = ["datasets/gum", "datasets/ewt"]
+    if(not already_loaded):
+        loader = Loader("Datu multzoak kargatzen...").start()
 
-    loader = Loader("Datu multzoak kargatzen...").start()
+        train_dev_df = load_train_and_dev_data(directories)
+        test_df = load_test_data(directories)
 
-    train_dev_df = load_train_and_dev_data(directories)
-    test_df = load_test_data(directories)
+        loader.stop()
 
-    loader.stop()
+        # Entrenamendu eta garapen multzoa aztertu
+        avg_length, median_length = get_sentence_lengths(train_dev_df)
+        print(f"[train+dev] Esaldien batez besteko luzera: {avg_length}")
+        print(f"[train+dev] Esaldien mediana luzera: {median_length}")
+        print(f"[train+dev] Hiztegiaren tamaina: {len(get_vocabulary(train_dev_df))}")
+        print(f"[train+dev] UPoS etiketak: {get_upos_tags(train_dev_df)}")
 
-    # Entrenamendu eta garapen multzoa aztertu
-    avg_length, median_length = get_sentence_lengths(train_dev_df)
-    print(f"[train+dev] Esaldien batez besteko luzera: {avg_length}")
-    print(f"[train+dev] Esaldien mediana luzera: {median_length}")
-    print(f"[train+dev] Hiztegiaren tamaina: {len(get_vocabulary(train_dev_df))}")
-    print(f"[train+dev] UPoS etiketak: {get_upos_tags(train_dev_df)}")
+        # Entrenamendu eta test multzoak gorde
+        path = './datasets/'
+        store_csvs(train_dev_df, path, 'train_dev')
+        store_csvs(test_df, path, 'test')
 
-    # Entrenamendu eta test multzoak gorde
-    path = './datasets/'
-    store_csvs(train_dev_df, path, 'train_dev')
-    store_csvs(test_df, path, 'test')
-
-    print(u'Datu multzoak gorde dira! \u2713')
+        print(u'Datu multzoak gorde dira! \u2713')
+    else:
+        print("Skipping preprocessing of the datasets...")
