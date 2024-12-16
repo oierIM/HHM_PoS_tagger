@@ -1,4 +1,5 @@
 import numpy as np
+from sklearn.metrics import confusion_matrix, precision_recall_fscore_support
 from collections import defaultdict, Counter
 
 class HMMPOSTagger:
@@ -137,7 +138,7 @@ class HMMPOSTagger:
         for t in range(T-1, 0, -1):
             best_path_pointer.insert(0, backpointer[best_path_pointer[0]][t])
         
-        return sentence, [self.idx2tags[idx] for idx in best_path_pointer]
+        return [self.idx2tags[idx] for idx in best_path_pointer]
 
     
     def evaluate(self, sentences, pos_tags):
@@ -151,14 +152,26 @@ class HMMPOSTagger:
         Itzultzen du:
             float: Etiketatzailearen zehaztasuna proba-datuetan.
         """
+        print("Evaluating...")
         correct, total = 0, 0
-        tags = []
+
+        all_true_tags = []
+        all_pred_tags = []
+
+        # Evaluate and collect predictions
         for sentence, true_tags in zip(sentences, pos_tags):
-            pred_tags = self.viterbi_alg(sentence)[1]
-            tags.append(pred_tags)
+            pred_tags = self.viterbi_alg(sentence)
+            all_true_tags.extend(true_tags)
+            all_pred_tags.extend(pred_tags)
+
             for p, t in zip(pred_tags, true_tags):
-                if p==t:
-                    correct +=1
+                if p == t:
+                    correct += 1
             total += len(true_tags)
 
-        return (correct/total, tags)
+        unique_tags = sorted(set(all_true_tags + all_pred_tags))
+        cm = confusion_matrix(all_true_tags, all_pred_tags, labels=unique_tags)
+
+        precision, recall, f1, _ = precision_recall_fscore_support(all_true_tags, all_pred_tags)
+
+        return correct / total, cm, unique_tags, precision, recall, f1

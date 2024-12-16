@@ -1,5 +1,10 @@
 from model.hmm import HMMPOSTagger
-from utils.conllu_dataloader import *
+
+from collections import defaultdict, Counter
+import utils.visualization_functions as visualization_functions
+import utils.conllu_dataloader as conllu_dataloader
+import csv
+import time
 
 def csv_to_list_of_lists(file_path):
     with open(file_path, 'r') as file:
@@ -13,41 +18,54 @@ def csv_to_list(file_path):
 
 if __name__ == "__main__":
 
-	sentences = csv_to_list_of_lists('./datasets/dataset_sentences.csv')
-	pos_tags = csv_to_list_of_lists('./datasets/dataset_pos_tags.csv')
-	vocabulary = csv_to_list('./datasets/dataset_vocab.csv')
-	tags = csv_to_list('./datasets/dataset_tags.csv')
+	conllu_dataloader.load_datasets(already_loaded=True)
+     
+	print("\n\n")
+
+	train_sentences = csv_to_list_of_lists('./datasets/train_dev_sentences.csv')
+	train_pos_tags = csv_to_list_of_lists('./datasets/train_dev_pos_tags.csv')
+	vocabulary = csv_to_list('./datasets/train_dev_vocab.csv')
+	
+	test_sentences = csv_to_list_of_lists('./datasets/test_sentences.csv')
+	test_pos_tags = csv_to_list_of_lists('./datasets/test_pos_tags.csv')
+
+	tags = csv_to_list('./datasets/tagset.csv')
 
 	tags.append('*')
 	tags.append("<STOP>")
 	vocabulary.append('*')
 	vocabulary.append("<STOP>")
-     
+    
+	print("Training models...")
+	start = time.time()
 	hmm = HMMPOSTagger(tags, vocabulary)
 	hmm_ours = HMMPOSTagger(tags, vocabulary)
 
-	hmm.train(sentences, pos_tags, change_vocab = True)
+	hmm.train(train_sentences, train_pos_tags, change_vocab = True)
      
-	hmm_ours.train(sentences, pos_tags, change_vocab = False)
-
-	test1 = ['her','dunking','was','suprememeably','supreme']
-
-	test = [['Jeremy', 'Loves', 'NLP'],
-			['Mario', 'is', 'god'],
-			['Kaixo', 'zer', 'moduz']]
-	tags = [['NOUN', 'VERB', 'NOUN'],
-			['NOUN', 'VERB', 'NOUN'],
-			['<UNK>', '<UNK>', '<UNK>']]
-
-	viterbi_result = hmm_ours.viterbi_alg(test1)
-	print(f'Original sentence= {test1}')
-	print(f'Sentence = {viterbi_result[0]}')
-	print(f'Tags applied = {viterbi_result[1]}')
+	hmm_ours.train(train_sentences, train_pos_tags, change_vocab = False)
+    
+	end = time.time()
+	print(f"Training completed in {end-start}")
+    
+	
+	print("\n\nOTHER VITERBI APPROACH:")
+	acc1, cm1, ut1, precision1, recall1, fscore1  = hmm.evaluate(test_sentences, test_pos_tags)
+	print(f"Test accuracy: {acc1}")
+	print(f"Test precision : {precision1}")
+	print(f"Test recall: {recall1}")
+	print(f"Test f1-score: {fscore1}")
+    
+	print("\nOUR VITERBI APPROACH:")
+	acc2, cm2, ut2, precision2, recall2, fscore2 = hmm_ours.evaluate(test_sentences, test_pos_tags)
+	print(f"Test accuracy: {acc2}")
+	print(f"Test precision : {precision2}")
+	print(f"Test recall: {recall2}")
+	print(f"Test f1-score: {fscore2}")
      
-	viterbi_result = hmm.viterbi_alg(test1)
-	print(f'Sentence = {viterbi_result[0]}')
-	print(f'Tags applied = {viterbi_result[1]}')
-	# print(hmm.evaluate(test, tags))
+	visualization_functions.plot_confusion_matrix(cm1, ut1)
+	visualization_functions.plot_confusion_matrix(cm2, ut2)
+
 
 
 

@@ -1,3 +1,4 @@
+
 """
 CoNLL-U format fields (source: https://universaldependencies.org/format.html)
 
@@ -15,7 +16,6 @@ CoNLL-U format fields (source: https://universaldependencies.org/format.html)
 
 
 """
-
 import os
 import pandas as pd
 from conllu import parse_incr
@@ -28,13 +28,14 @@ from time import sleep
 
 
 class Loader:
-    def __init__(self, desc="Loading...", end='Loaded! \N{grinning face with smiling eyes}', timeout=0.1):
+    def __init__(self, desc="Datuak kargatzen...", end='Datuak kargatuta! \N{grinning face with smiling eyes}', timeout=0.1):
         """
         Karga-indikadore bat sortzen du.
 
         Args:
-            desc (str): Deskribapena. Defaults to "Loading...".
-            end (str): Amaierako mezua. Defaults to "Loaded! 😊".
+            desc (str): Deskribapena.
+            end (str): Amaierako mezua.
+
             timeout (float): Tartea (segundutan). Defaults to 0.1.
         """
         self.desc = desc
@@ -66,25 +67,22 @@ class Loader:
         print(f"\r{self.end}", flush=True)
 
     def __exit__(self, exc_type, exc_value, tb):
-        # handle exceptions with those variables ^
         self.stop()
 
-def load_conllu_files(directory, prefixes):
+def load_conllu_files(directory, suffix):
     """
-    Kargatu .conllu fitxategi guztiak emandako direktorioan. 
-    Aurrizkirik zehazten ez bada (prefixes zerrenda hutsa), direktorioko fitxategi guztiak irakurriko ditu.
+    Kargatu .conllu fitxategiak emandako direktorioan, sufijo jakin bat duenak.
 
     :param directory: .conllu fitxategiak dituen direktorioaren bidea.
-    :param prefixes: Bat datozen fitxategi izenaren aurrizkien zerrenda. Zerrenda hutsa bada, direktorioko fitxategi guztiak irakurriko ditu.
-    :return: Bat datozen .conllu fitxategi guztietatik parseatutako esaldien zerrenda.
+    :param suffix: Fitxategiaren sufijoa (adibidez, '-train', '-dev', '-test').
+    :return: Bat datozen .conllu fitxategietatik parseatutako esaldien zerrenda.
     """
     sentences = []
     for file_name in os.listdir(directory):
-        if file_name.endswith('.conllu') and (not prefixes or any(file_name.startswith(prefix) for prefix in prefixes)):
+        if file_name.endswith('.conllu') and file_name.endswith(suffix + '.conllu'):
             file_path = os.path.join(directory, file_name)
             with open(file_path, 'r', encoding='utf-8') as f:
                 sentences.extend(list(parse_incr(f)))
-
     return sentences
 
 def sentences_to_dataframe(sentences):
@@ -103,9 +101,10 @@ def sentences_to_dataframe(sentences):
                     "id": token.get("id"),              # Hitzaren indizea esaldian
                     "form": token.get("form"),          # Hitzaren agerpen originala
                     "lemma": token.get("lemma"),        # Hitzaren lema
-                    "upos": token.get("upos"),          # PoS etiketa unibertsala <----- 
+                    "upos": token.get("upos"),          # PoS etiketa unibertsala
                     "xpos": token.get("xpos"),          # Treebank PoS etiketa edo etiketa morfologikoa
-                    "feats": token.get("feats"),        # Morphological features
+                    "feats": token.get("feats"),        # Ezaugarri morfologikoak
+
                     "head": token.get("head"),          # Hitzaren burua
                     "deprel": token.get("deprel"),      # Buruarekiko dependentziak
                     "deps": token.get("deps"),          # Dependentzia grafoa
@@ -113,117 +112,89 @@ def sentences_to_dataframe(sentences):
                 })
     return pd.DataFrame(rows)
 
-def get_vocabulary(df):
-    """
-    Sortu hiztegi bat datuetan agertzen diren hitz guztiekin.
+def load_train_and_dev_data(directories):
+    """Train eta dev datuak kargatu zehaztutako direktorioetatik."""
+    all_sentences = []
+    for directory in directories:
+        all_sentences.extend(load_conllu_files(directory, '-train'))
+        all_sentences.extend(load_conllu_files(directory, '-dev'))
+    return sentences_to_dataframe(all_sentences)
 
-    :param df: Pandas DataFrame, esaldien datuekin.
-    :return: Hitz bakarren multzo bat (vocabulary).
-    """
+def load_test_data(directories):
+    """Test-datuak kargatu zehaztutako direktorioetatik."""
+    all_sentences = []
+    for directory in directories:
+        all_sentences.extend(load_conllu_files(directory, '-test'))
+    return sentences_to_dataframe(all_sentences)
+
+def get_vocabulary(df):
+    """Datu multzoan agertzen diren hitz guztiekin hiztegia sortu."""
     return set(df['form'])
 
 def get_sentence_lengths(df):
-    """
-    Kalkulatu esaldien batez besteko eta mediana luzerak.
+    """Esaldien batez besteko eta mediana luzerak kalkulatu."""
 
-    :param df: Pandas DataFrame, esaldien datuekin.
-    :return: Batez besteko eta mediana luzerak tuple gisa.
-    """
     sentence_lengths = df.groupby('sentence_index')['id'].count()
     avg_length = sentence_lengths.mean()
     median_length = sentence_lengths.median()
     return avg_length, median_length
 
-
 def get_upos_tags(df):
-    """
-    Atera datuetan agertzen diren 'upos' etiketak.
-
-    :param df: Pandas DataFrame, esaldien datuekin.
-    :return: 'upos' etiketak multzo bat gisa.
-    """
+    """Datuetan agertzen diren 'upos' etiketak atera."""
     return set(df['upos'])
 
-
-def load_sentences_from_directories(directories, prefixes=[]):
-    """
-    Kargatu .conllu fitxategien esaldi guztiak direktorio bat edo gehiagotik eta bateratu guztiak.
-
-    :param directories: Direktorioen zerrenda edo multzo bat.
-    :param prefixes: Aurrizkien zerrenda fitxategiak iragazteko (hutsa bada, fitxategi guztiak irakurriko dira).
-    :return: Bateratutako esaldien zerrenda.
-    """
-    #prefixes = ["GUM_academic_", "GUM_bio_", "GUM_news_"]
-    #prefixes = ["GUM_academic_"]
-    all_sentences = []
-    for directory in directories:
-        all_sentences.extend(load_conllu_files(directory, prefixes))
-    return sentences_to_dataframe(all_sentences)
-
-def store_sentences_in_csv(df, path = './datasets/'):
+def store_sentences_in_csv(df, path, filename):
     sentences = []
-
-    for i in tqdm(range(max(df["sentence_index"])), desc=f"Storing sentences in {path} dataset_sentences.csv"):
-        sentences.append(df[df['sentence_index']==i]["form"].to_list())
-
-    with open(path + 'dataset_sentences.csv', 'w', newline='') as f:
+    for i in tqdm(range(max(df["sentence_index"])), desc=f"{filename} gordetzen"):
+        sentences.append(df[df['sentence_index'] == i]["form"].to_list())
+    with open(os.path.join(path, filename), 'w', newline='') as f:
         writer = csv.writer(f)
         writer.writerows(sentences)
 
-def store_pos_tags_in_csv(df, path = './datasets/'):
+def store_pos_tags_in_csv(df, path, filename):
     sentences = []
-
-    for i in tqdm(range(max(df["sentence_index"])), desc=f"Storing pos_tags in {path} dataset_pos_tags.csv (Kaixo Jeremy \N{sauropod})"):
-        sentences.append(df[df['sentence_index']==i]["upos"].to_list())
-
-    with open(path + 'dataset_pos_tags.csv', 'w', newline='') as f:
+    for i in tqdm(range(max(df["sentence_index"])), desc=f"{filename} gordetzen"):
+        sentences.append(df[df['sentence_index'] == i]["upos"].to_list())
+    with open(os.path.join(path, filename), 'w', newline='') as f:
         writer = csv.writer(f)
         writer.writerows(sentences)
 
-def store_vocab_in_csv(vocab, path = './datasets/'):
-    print(f'Storing vocab in {path} dataset_vocab.csv')
-    with open(path + 'dataset_vocab.csv', 'w', newline='') as f:
+def store_vocab_in_csv(vocab, path, filename):
+    print(f'Hiztegia gordetzen: {filename}')
+    with open(os.path.join(path, filename), 'w', newline='') as f:
         writer = csv.writer(f)
         writer.writerow(list(vocab))
 
-def store_vocab_in_csv(tags, path = './datasets/'):
-    print(f'Storing tags in {path} dataset_tags.csv')
-    with open(path + 'dataset_tags.csv', 'w', newline='') as f:
-        writer = csv.writer(f)
-        writer.writerow(list(tags))
-def store_csvs(df, path = './datasets/'):
-    store_sentences_in_csv(df, path)
-    store_pos_tags_in_csv(df, path)
+def store_csvs(df, path, prefix):
+    store_sentences_in_csv(df, path, f'{prefix}_sentences.csv')
+    store_pos_tags_in_csv(df, path, f'{prefix}_pos_tags.csv')
+    store_vocab_in_csv(get_vocabulary(df), path, f'{prefix}_vocab.csv')
+    store_vocab_in_csv(get_upos_tags(df), path, f'tagset.csv')
 
-    store_vocab_in_csv(get_vocabulary(df), path)
-    store_vocab_in_csv(get_upos_tags(df), path)
 
-# Probak egiteko deskomentatu, bestela "import" bidez erabili
-if __name__ == "__main__":
-
+def load_datasets(already_loaded=False):
     directories = ["datasets/gum", "datasets/ewt"]
+    if(not already_loaded):
+        loader = Loader("Datu multzoak kargatzen...").start()
 
+        train_dev_df = load_train_and_dev_data(directories)
+        test_df = load_test_data(directories)
 
-    loader = Loader("Loading dataset...").start()
+        loader.stop()
 
-    df = load_sentences_from_directories(directories)
-    
-    loader.stop()
-        
-    # Esandien batez besteko eta luzeera medianak
-    avg_length, median_length = get_sentence_lengths(df)
-    print(f"Average Sentence Length: {avg_length}")
-    print(f"Median Sentence Length: {median_length}")
+        # Entrenamendu eta garapen multzoa aztertu
+        avg_length, median_length = get_sentence_lengths(train_dev_df)
+        print(f"[train+dev] Esaldien batez besteko luzera: {avg_length}")
+        print(f"[train+dev] Esaldien mediana luzera: {median_length}")
+        print(f"[train+dev] Hiztegiaren tamaina: {len(get_vocabulary(train_dev_df))}")
+        print(f"[train+dev] UPoS etiketak: {get_upos_tags(train_dev_df)}")
 
-    # Datu multzoko vocab
-    vocabulary = get_vocabulary(df)
-    print(f"Vocabulary Size: {len(vocabulary)}")
-    print(f"Vocabulary Sample: {list(vocabulary)[:10]}")
+        # Entrenamendu eta test multzoak gorde
+        path = './datasets/'
+        store_csvs(train_dev_df, path, 'train_dev')
+        store_csvs(test_df, path, 'test')
 
-    # Universal PoS etiketak atera
-    upos_tags = get_upos_tags(df)
-    print(f"Unique UPoS Tags: {upos_tags}")
+        print(u'Datu multzoak gorde dira! \u2713')
+    else:
+        print("Skipping preprocessing of the datasets...")
 
-    path = './datasets/'
-    store_csvs(df, path)
-    print(u'Dataset stored! \u2713')
