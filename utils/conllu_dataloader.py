@@ -139,9 +139,32 @@ def get_sentence_lengths(df):
     median_length = sentence_lengths.median()
     return avg_length, median_length
 
+map_pos_tags = {'ADJ': 'ADJ',
+                'PROPN':'NOUN', 
+                'NOUN': 'NOUN',
+                'PRON':'PRON',
+                'CCONJ':'CONJ',
+                'ADV':'ADV',
+                'X':'X',
+                'VERB':'VERB',
+                '_':'_',
+                'AUX':'VERB',
+                'SYM':'.',
+                'NUM':'NUM',
+                'PART':'PRT',
+                'DET':'DET',
+                'INTJ':'INTJ',
+                'ADP':'ADP',
+                'SCONJ':'CONJ',
+                'PUNCT':'.',
+                }
+
+
 def get_upos_tags(df):
     """Datuetan agertzen diren 'upos' etiketak atera."""
-    return set(df['upos'])
+
+    upos_tags = set([map_pos_tags[word] for word in set(df['upos'])])
+    return upos_tags
 
 def store_sentences_in_csv(df, path, filename):
     sentences = []
@@ -154,7 +177,9 @@ def store_sentences_in_csv(df, path, filename):
 def store_pos_tags_in_csv(df, path, filename):
     sentences = []
     for i in tqdm(range(max(df["sentence_index"])), desc=f"{filename} gordetzen"):
-        sentences.append(df[df['sentence_index'] == i]["upos"].to_list())
+        sent = df[df['sentence_index'] == i]["upos"].to_list()
+        sent = [map_pos_tags[word] for word in sent]
+        sentences.append(sent)
     with open(os.path.join(path, filename), 'w', newline='') as f:
         writer = csv.writer(f)
         writer.writerows(sentences)
@@ -164,6 +189,12 @@ def store_vocab_in_csv(vocab, path, filename):
     with open(os.path.join(path, filename), 'w', newline='') as f:
         writer = csv.writer(f)
         writer.writerow(list(vocab))
+
+def store_tagset_in_csv(tagset, path, filename):
+    print(f'Erabilitako PoS tag-ak gordetzen: {filename}')
+    with open(os.path.join(path, filename), 'w', newline='') as f:
+        writer = csv.writer(f)
+        writer.writerow(list(tagset))
 
 def store_csvs(df, path, prefix):
     store_sentences_in_csv(df, path, f'{prefix}_sentences.csv')
