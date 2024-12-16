@@ -138,52 +138,60 @@ class HMMPOSTagger:
         return [self.idx2tags[idx] for idx in best_path_pointer]
 
     
-    def evaluate(self, sentences, pos_tags, do_mapping=False):
+    def evaluate(self, sentences, pos_tags, mapping_mode="in_domain_no_mapping"):
         """
-        HMM etiketailea ebaluatzen du proba-datuetan.
-        
+        HMM etiketatzailea proba-datuetan ebaluatzen du.
+
         Arg:
-            sentences (zerrenda-zerrendak): Proba esaldiak.
-            pos_tags (zerrenda-zerrendak): Esaldi bakoitzari dagozkion egiazko POS etiketak.
-            do_mapping (bool): NLTK-rako mapping egin edo ez
-        
+            sentences (zerrenda-zerrenda): Proba esaldiak.
+            pos_tags (zerrenda-zerrenda): Esaldi bakoitzari dagozkion egiazko POS etiketak.
+            mapping_mode (str): 'in_domain_no_mapping', 'in_domain_mapping', 'out_domain_mapping' aukeretako bat.
+
         Itzultzen du:
             float: Etiketatzailearen zehaztasuna proba-datuetan.
+            list: Nahasketa-matrizea.
+            list: Erabilitako etiketa bereziak.
+            list: Zehaztasun-puntuazioak.
+            list: Errebokazio-puntuazioak.
+            list: F1 puntuazioak.
         """
         print("Evaluating...")
 
-        map_pos_tags = {'ADJ': 'ADJ',
-                'PROPN':'NOUN', 
-                'NOUN': 'NOUN',
-                'PRON':'PRON',
-                'CCONJ':'CONJ',
-                'ADV':'ADV',
-                'X':'X',
-                'VERB':'VERB',
-                '_':'_',
-                'AUX':'VERB',
-                'SYM':'.',
-                'NUM':'NUM',
-                'PART':'PRT',
-                'DET':'DET',
-                'INTJ':'INTJ',
-                'ADP':'ADP',
-                'SCONJ':'CONJ',
-                'PUNCT':'.',
-                }
-        
+        map_pos_tags = {
+            'ADJ': 'ADJ',
+            'PROPN': 'NOUN',
+            'NOUN': 'NOUN',
+            'PRON': 'PRON',
+            'CCONJ': 'CONJ',
+            'ADV': 'ADV',
+            'X': 'X',
+            'VERB': 'VERB',
+            '_': '_',
+            'AUX': 'VERB',
+            'SYM': '.',
+            'NUM': 'NUM',
+            'PART': 'PRT',
+            'DET': 'DET',
+            'INTJ': 'INTJ',
+            'ADP': 'ADP',
+            'SCONJ': 'CONJ',
+            'PUNCT': '.',
+        }
+
         correct, total = 0, 0
 
         all_true_tags = []
         all_pred_tags = []
 
-        # Evaluate and collect predictions
         for sentence, true_tags in zip(sentences, pos_tags):
             pred_tags = self.viterbi_alg(sentence)
-            
-            if do_mapping:
+
+            if mapping_mode == "in_domain_mapping":
                 pred_tags = [map_pos_tags[tag] for tag in pred_tags]
                 true_tags = [map_pos_tags[tag] for tag in true_tags]
+            elif mapping_mode == "out_domain_mapping":
+                pred_tags = [map_pos_tags[tag] for tag in pred_tags]
+
             all_true_tags.extend(true_tags)
             all_pred_tags.extend(pred_tags)
 

@@ -5,18 +5,25 @@ matplotlib.use('Agg')
 import seaborn as sns
 import numpy as np
 
-def plot_confusion_matrix(cm, unique_tags):
-    # Plot confusion matrix
+def plot_confusion_matrix(cm, unique_tags, title):
+    """
+    Plots the Confusion Matrix.
+
+    Args:
+    cm (sklearn.metrics.confusion_matrix): Confusion matrix.
+    unique_tags (list of str): List of unique PoS tags.
+    title (str): Title to use. Some posible titles: "In-Domain Confusion Matrix of POS Tagging", "Out-of-Domain Confusion Matrix of POS Tagging", ...
+    """
     plt.figure(figsize=(12, 8))
     sns.heatmap(
         cm, annot=True, fmt="d", cmap="Blues", xticklabels=unique_tags, yticklabels=unique_tags
     )
     plt.xlabel("Predicted Tags")
     plt.ylabel("True Tags")
-    plt.title("Confusion Matrix of POS Tagging")
+    plt.title(title)
     plt.savefig("confussion_matrix")
 
-def plot_f1_scores(unique_tags, precision, recall, f1_scores):
+def plot_f1_scores(unique_tags, precision, recall, f1_scores, title):
     """
     Plots the Precision, Recall and F1-scores for each tag as grouped bar plots.
     The average F1-score is shown as a horizontal line.
@@ -26,6 +33,7 @@ def plot_f1_scores(unique_tags, precision, recall, f1_scores):
     precision (list of float): Precision scores for each tag.
     recall (list of float): Recall scores for each tag.
     f1_scores (list of float): F1-scores for each tag.
+    title (str): Title to use. Some posible titles: "In-Domain Precision, Recall and F1-Scores for Each POS Tag", "Out-of-Domain Precision, Recall and F1-Scores for Each POS Tag", ...
     """
     # Calculate the average F1 score
     avg_f1_score = np.mean(f1_scores)
@@ -50,7 +58,7 @@ def plot_f1_scores(unique_tags, precision, recall, f1_scores):
     plt.xticks(x + bar_width, unique_tags, rotation=45, ha='right')
     plt.xlabel('POS Tags', fontsize=12)
     plt.ylabel('Score', fontsize=12)
-    plt.title('In-Domain Precision, Recall and F1-Scores for Each POS Tag', fontsize=16)
+    plt.title(title, fontsize=16)
     plt.legend()
     plt.tight_layout()
 
