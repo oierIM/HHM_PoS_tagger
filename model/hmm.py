@@ -183,6 +183,7 @@ class HMMPOSTagger:
             
             if do_mapping:
                 pred_tags = [map_pos_tags[tag] for tag in pred_tags]
+                true_tags = [map_pos_tags[tag] for tag in true_tags]
             all_true_tags.extend(true_tags)
             all_pred_tags.extend(pred_tags)
 
