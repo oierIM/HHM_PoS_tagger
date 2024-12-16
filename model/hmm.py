@@ -84,9 +84,6 @@ class HMMPOSTagger:
                     self.emission_counts[tag]['<UNK>'] += self.emission_counts[tag][u]
                     self.emission_counts[tag].pop(u)
 
-
-
-
     def get_probs(self):
         """
         Zenbaketak probabilitate bihurtzen ditu trantsizio eta emisioetarako.
