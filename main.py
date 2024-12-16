@@ -63,12 +63,7 @@ if __name__ == "__main__":
 	print(f"Test recall: {recall2}")
 	print(f"Test f1-score: {fscore2}")
      
-	visualization_functions.plot_confusion_matrix(cm1, ut1)
+	# visualization_functions.plot_confusion_matrix(cm1, ut1)
 	visualization_functions.plot_confusion_matrix(cm2, ut2)
-
-
-
-
-
-
-    
+     
+	visualization_functions.plot_f1_scores(unique_tags=ut2, precision=precision2, recall=recall2, f1_scores=fscore2)
